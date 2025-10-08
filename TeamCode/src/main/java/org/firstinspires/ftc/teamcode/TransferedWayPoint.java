@@ -55,7 +55,7 @@ import java.util.Vector;
  */
 @Autonomous(name = "Specimin", group = "Auto")
 // @Disabled
-public class Observation extends LinearOpMode {
+public class TransferedWayPoint extends LinearOpMode {
 
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
