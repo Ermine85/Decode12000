@@ -69,15 +69,16 @@ import java.util.Vector;
 public class CameraGimTestScript extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
-    private CRServo XServo = null;
+    private Servo XServo = null;
     private Servo YServo = null;
 
-    private Vector previous;
+    private Vector<Double> previous;
 
-    private Vector current;
+    private Vector<Double> current;
+    private int ScanPos = 0;
 
     private boolean TagFound = false;
-    private double Scale = 10;
+    private double ServoPos = 0;
 
 
 
@@ -96,8 +97,11 @@ public class CameraGimTestScript extends LinearOpMode {
     @Override
     public void runOpMode() {
 
+        StartVector(previous, 0, 0, 0);
 
-        XServo = hardwareMap.get(CRServo.class, "x_servo");
+        StartVector(current, 0, 0, 0);
+
+        XServo = hardwareMap.get(Servo.class, "x_servo");
         YServo = hardwareMap.get(Servo.class, "y_servo");
 
         initAprilTag();
@@ -108,9 +112,7 @@ public class CameraGimTestScript extends LinearOpMode {
 
         telemetry.update();
 
-        StartVector(previous, 0, 0, 0);
 
-        StartVector(current, 0, 0, 0);
 
 
         waitForStart();
@@ -131,17 +133,42 @@ public class CameraGimTestScript extends LinearOpMode {
                 }
 
 
-
-                if(TagFound){
+                if(gamepad1.a){
+                    XServo.setPosition(0);
+                }
+                if(gamepad1.b){
+                    XServo.setPosition(1);
+                }
+                /*if(TagFound){
                     double DeltaX = 0 - (double)current.get(0);
+                    double DeltaY = (double)current.get(1);
 
-                    DeltaX /= Scale;
-                    XServo.setPower(DeltaX);
+                    double DeltaA = Math.atan(DeltaX/DeltaY);
+                    if(DeltaX < 0){
+                        DeltaA += Math.PI;
+                    }
+
+                    double ServoA = DeltaA / (2*Math.PI);
+
+                    ServoPos = XServo.getPosition();
+
+                    if(ServoPos + ServoA > 1){
+                        ServoPos -= 1;
+                    }else if(ServoPos + ServoA < 0){
+                        ServoPos += 1;
+                    }
+
+                    XServo.setPosition(ServoPos + ServoA);
 
                     previous = current;
                 }else{
-                    XServo.setPower(0.5);
-                }
+                    XServo.setPosition(ScanPos);
+                    if(XServo.getPosition() == 0){
+                        ScanPos = 1;
+                    }else if(XServo.getPosition() == 1){
+                        ScanPos = 0;
+                    }
+                }*/
 
 
                 // Share the CPU.
