@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -37,8 +37,11 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.CRServo;
 
 import java.util.List;
+import java.util.Vector;
 
 /*
  * This OpMode illustrates the basics of AprilTag recognition and pose estimation, using
@@ -62,10 +65,23 @@ import java.util.List;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
 @TeleOp(name = "Concept: AprilTag Easy", group = "Concept")
-@Disabled
-public class ConceptAprilTagEasy extends LinearOpMode {
+
+public class CameraGimTestScript extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
+    private CRServo XServo = null;
+    private Servo YServo = null;
+
+    private Vector previous;
+
+    private Vector current;
+
+    private boolean TagFound = false;
+    private double Scale = 10;
+
+
+
+
 
     /**
      * The variable to store our instance of the AprilTag processor.
@@ -80,12 +96,23 @@ public class ConceptAprilTagEasy extends LinearOpMode {
     @Override
     public void runOpMode() {
 
+
+        XServo = hardwareMap.get(CRServo.class, "x_servo");
+        YServo = hardwareMap.get(Servo.class, "y_servo");
+
         initAprilTag();
 
         // Wait for the DS start button to be touched.
         telemetry.addData("DS preview on/off", "3 dots, Camera Stream");
         telemetry.addData(">", "Touch START to start OpMode");
+
         telemetry.update();
+
+        StartVector(previous, 0, 0, 0);
+
+        StartVector(current, 0, 0, 0);
+
+
         waitForStart();
 
         if (opModeIsActive()) {
@@ -102,6 +129,20 @@ public class ConceptAprilTagEasy extends LinearOpMode {
                 } else if (gamepad1.dpad_up) {
                     visionPortal.resumeStreaming();
                 }
+
+
+
+                if(TagFound){
+                    double DeltaX = 0 - (double)current.get(0);
+
+                    DeltaX /= Scale;
+                    XServo.setPower(DeltaX);
+
+                    previous = current;
+                }else{
+                    XServo.setPower(0.5);
+                }
+
 
                 // Share the CPU.
                 sleep(20);
@@ -124,10 +165,10 @@ public class ConceptAprilTagEasy extends LinearOpMode {
         // Create the vision portal the easy way.
         if (USE_WEBCAM) {
             visionPortal = VisionPortal.easyCreateWithDefaults(
-                hardwareMap.get(WebcamName.class, "Webcam 1"), aprilTag);
+                    hardwareMap.get(WebcamName.class, "Webcam 1"), aprilTag);
         } else {
             visionPortal = VisionPortal.easyCreateWithDefaults(
-                BuiltinCameraDirection.BACK, aprilTag);
+                    BuiltinCameraDirection.BACK, aprilTag);
         }
 
     }   // end method initAprilTag()
@@ -140,9 +181,14 @@ public class ConceptAprilTagEasy extends LinearOpMode {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         telemetry.addData("# AprilTags Detected", currentDetections.size());
 
+        TagFound = !currentDetections.isEmpty();
+
         // Step through the list of detections and display info for each one.
         for (AprilTagDetection detection : currentDetections) {
             if (detection.metadata != null) {
+
+                SetVector(current, detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z);
+
                 telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
                 telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
                 telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
@@ -160,4 +206,17 @@ public class ConceptAprilTagEasy extends LinearOpMode {
 
     }   // end method telemetryAprilTag()
 
+
+    public void SetVector(Vector vector, double X, double Y, double Z)
+    {
+        vector.set(0, X);
+        vector.set(1, Y);
+        vector.set(2, Z);
+    }
+
+    public void StartVector(Vector vector, double X, double Y, double Z){
+        vector.add(X);
+        vector.add(Y);
+        vector.add(Z);
+    }
 }   // end class
