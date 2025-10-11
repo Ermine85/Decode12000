@@ -64,7 +64,7 @@ import java.util.Vector;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
-@TeleOp(name = "Concept: AprilTag Easy", group = "Concept")
+@TeleOp(name = "CamTest", group = "Concept")
 
 public class CameraGimTestScript extends LinearOpMode {
 
@@ -72,16 +72,13 @@ public class CameraGimTestScript extends LinearOpMode {
     private Servo XServo = null;
     private Servo YServo = null;
 
-    private Vector<Double> previous;
+    private Vector<Double> previous = new Vector<>(3);
 
-    private Vector<Double> current;
+    private Vector<Double> current = new Vector<>(3);
     private int ScanPos = 0;
 
     private boolean TagFound = false;
     private double ServoPos = 0;
-
-
-
 
 
     /**
@@ -113,13 +110,12 @@ public class CameraGimTestScript extends LinearOpMode {
         telemetry.update();
 
 
-
-
         waitForStart();
 
         if (opModeIsActive()) {
             while (opModeIsActive()) {
 
+                telemetry.addData("Servo", XServo.getPosition());
                 telemetryAprilTag();
 
                 // Push telemetry to the Driver Station.
@@ -134,11 +130,12 @@ public class CameraGimTestScript extends LinearOpMode {
 
 
                 if(gamepad1.a){
-                    XServo.setPosition(0);
+                    XServo.setPosition(0.1);
                 }
                 if(gamepad1.b){
-                    XServo.setPosition(1);
+                    XServo.setPosition(0.9);
                 }
+
                 /*if(TagFound){
                     double DeltaX = 0 - (double)current.get(0);
                     double DeltaY = (double)current.get(1);
