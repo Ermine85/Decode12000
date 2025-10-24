@@ -33,6 +33,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -63,7 +64,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Basic: OmniTest", group="Linear OpMode")
+@TeleOp(name="DRIVE", group="Linear OpMode")
 //@Disabled
 public class OmniTest extends LinearOpMode {
 
@@ -74,6 +75,10 @@ public class OmniTest extends LinearOpMode {
     private DcMotor RightFront = null;
     private DcMotor RightBack = null;
 
+    private DcMotor Intake = null;
+    private DcMotor Storage = null;
+    private DcMotor Launcher = null;
+
     @Override
     public void runOpMode() {
 
@@ -83,6 +88,9 @@ public class OmniTest extends LinearOpMode {
         LeftBack = hardwareMap.get(DcMotor.class, "LeftBack");
         RightFront = hardwareMap.get(DcMotor.class, "RightFront");
         RightBack = hardwareMap.get(DcMotor.class, "RightBack");
+        Intake = hardwareMap.get(DcMotor.class, "Intake");
+        Storage = hardwareMap.get(DcMotor.class, "Storage");
+        Launcher = hardwareMap.get(DcMotor.class, "Launcher");
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -94,10 +102,14 @@ public class OmniTest extends LinearOpMode {
         // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
         // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
         // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
-        LeftFront.setDirection(DcMotor.Direction.REVERSE);
+        LeftFront.setDirection(DcMotor.Direction.FORWARD);
         LeftBack.setDirection(DcMotor.Direction.REVERSE);
         RightFront.setDirection(DcMotor.Direction.FORWARD);
-        RightBack.setDirection(DcMotor.Direction.FORWARD);
+        RightBack.setDirection(DcMotor.Direction.REVERSE);
+
+        Storage.setDirection(DcMotor.Direction.FORWARD);
+        Intake.setDirection(DcMotor.Direction.FORWARD);
+        Launcher.setDirection(DcMotor.Direction.FORWARD);
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
@@ -111,16 +123,16 @@ public class OmniTest extends LinearOpMode {
             double max;
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double lateral =  gamepad1.left_stick_x;
-            double yaw     =  gamepad1.right_stick_x;
+            double axial   =  -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+            double lateral = gamepad1.left_stick_x;
+            double yaw     = -gamepad1.right_stick_x;
 
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
-            double frontLeftPower  = axial + lateral + yaw;
-            double frontRightPower = axial - lateral - yaw;
-            double backLeftPower   = axial - lateral + yaw;
-            double backRightPower  = axial + lateral - yaw;
+            double frontLeftPower  = axial + lateral - yaw;
+            double frontRightPower = -axial + lateral - yaw;
+            double backLeftPower   = axial - lateral - yaw;
+            double backRightPower  = -axial - lateral - yaw;
 
             // Normalize the values so no wheel power exceeds 100%
             // This ensures that the robot maintains the desired motion.
@@ -157,6 +169,26 @@ public class OmniTest extends LinearOpMode {
             RightFront.setPower(frontRightPower / 2);
             LeftBack.setPower(backLeftPower / 2);
             RightBack.setPower(backRightPower / 2);
+
+            if(gamepad1.b) {
+                Launcher.setPower(1);
+            } else {
+                Launcher.setPower(0);
+            }
+
+            if(gamepad1.right_trigger > 0){
+                Storage.setPower(0.5);
+            }else{
+                Storage.setPower(0);
+            }
+
+
+            if(gamepad1.left_trigger > 0) {
+                Intake.setPower(0.5);
+            } else {
+                Intake.setPower(0);
+            }
+
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
