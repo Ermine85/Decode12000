@@ -65,7 +65,7 @@ public class Omni12000 extends LinearOpMode {
    private DcMotor RightBack = null;
 
 
-   private ColorSensor ColorSensor = null, ClawSensor = null; //Color is for Intake, Claw is for Claw
+   private ColorSensor ColorSensor = null, CS = null; //Color is for Intake, Claw is for Claw
    private TouchSensor touch = null, verttouch = null, armTouch = null;
 
 
@@ -167,7 +167,7 @@ public class Omni12000 extends LinearOpMode {
 
 
        ColorSensor = hardwareMap.get(ColorSensor.class, "ColorSensor");
-       ClawSensor = hardwareMap.get(ColorSensor.class, "ClawSensor");
+       CS = hardwareMap.get(ColorSensor.class, "ClawSensor");
        touch = hardwareMap.get(TouchSensor.class, "SlideTouch");
        verttouch = hardwareMap.get(TouchSensor.class, "vert_touch");
        armTouch = hardwareMap.get(TouchSensor.class, "arm_touch");
@@ -623,11 +623,6 @@ public class Omni12000 extends LinearOpMode {
    }
    void CheckColor(boolean loop)
    {
-       //Values are Red, Blue, Green
-       double[] empty = {64, 80, 99};//64,80,99 //74,120,120
-       double[] red = {724, 158, 340};//724,158,340 //896, 170, 407
-       double[] blue = {126, 582, 240};//126,582,240 //179, 867, 365
-       double[] yellow = {1018, 277, 1193}; //1018,277,1193 //1386, 363, 1724
 
 
        telemetry.addLine();
@@ -636,11 +631,16 @@ public class Omni12000 extends LinearOpMode {
        telemetry.addData("Blue", ColorSensor.blue());
 
 
+       //Values are Red, Blue, Green
+       double[] empty = {64, 80, 99};//64,80,99 //74,120,120
+       double[] red = {724, 158, 340};//724,158,340 //896, 170, 407
+       double[] blue = {126, 582, 240};//126,582,240 //179, 867, 365
+       double[] yellow = {1018, 277, 1193}; //1018,277,1193 //1386, 363, 1724
+
        double deltaE = Math.sqrt((Math.pow(empty[0] - ColorSensor.red(),2) + (Math.pow(empty[1] - ColorSensor.blue(),2)) + (Math.pow(empty[2] - ColorSensor.green(),2)) ));
        double deltaR = Math.sqrt((Math.pow(red[0] - ColorSensor.red(),2) + (Math.pow(red[1] - ColorSensor.blue(),2)) + (Math.pow(red[2] - ColorSensor.green(),2)) ));
        double deltaB = Math.sqrt((Math.pow(blue[0] - ColorSensor.red(),2) + (Math.pow(blue[1] - ColorSensor.blue(),2)) + (Math.pow(blue[2] - ColorSensor.green(),2)) ));
        double deltaY = Math.sqrt((Math.pow(yellow[0] - ColorSensor.red(),2) + (Math.pow(yellow[1] - ColorSensor.blue(),2)) + (Math.pow(yellow[2] - ColorSensor.green(),2)) ));
-
 
        double emptyConfidence = 1 - (deltaE/3)*((1 / (deltaE + deltaR)) + (1/((deltaE + deltaB))) + (1/(deltaE + deltaY)));
        double redConfidence = 1 - (deltaR/3)*((1 / (deltaR + deltaE)) + (1/((deltaR + deltaB))) + (1/(deltaR + deltaY)));
@@ -683,6 +683,13 @@ public class Omni12000 extends LinearOpMode {
 
    public String CheckColorClaw()
    {
+
+       telemetry.addLine();
+       telemetry.addData("Red", CS.red());
+       telemetry.addData("Green", CS.green());
+       telemetry.addData("Blue", CS.blue());
+
+
        String ClawCube = null;
        //Values are Red, Blue, Green
        double[] empty = {64, 80, 99};//64,80,99 //74,120,120
@@ -690,19 +697,14 @@ public class Omni12000 extends LinearOpMode {
        double[] blue = {126, 582, 240};//126,582,240 //179, 867, 365
        double[] yellow = {1018, 277, 1193}; //1018,277,1193 //1386, 363, 1724
 
+        //CS = Color Sensor Variable
+       //Get overall distance by using the difference of all colors (red, blue, green) in pythagorean set up sqrt(DeltaRed^2 + DeltaBlue^2...
+       double deltaE = Math.sqrt((Math.pow(empty[0] - CS.red(),2) + (Math.pow(empty[1] - CS.blue(),2)) + (Math.pow(empty[2] - CS.green(),2))));
+       double deltaR = Math.sqrt((Math.pow(red[0] - CS.red(),2) + (Math.pow(red[1] - CS.blue(),2)) + (Math.pow(red[2] - CS.green(),2))));
+       double deltaB = Math.sqrt((Math.pow(blue[0] - CS.red(),2) + (Math.pow(blue[1] - CS.blue(),2)) + (Math.pow(blue[2] - CS.green(),2))));
+       double deltaY = Math.sqrt((Math.pow(yellow[0] - CS.red(),2) + (Math.pow(yellow[1] - CS.blue(),2)) + (Math.pow(yellow[2] - CS.green(),2))));
 
-       telemetry.addLine();
-       telemetry.addData("Red", ClawSensor.red());
-       telemetry.addData("Green", ClawSensor.green());
-       telemetry.addData("Blue", ClawSensor.blue());
-
-
-       double deltaE = Math.sqrt((Math.pow(empty[0] - ClawSensor.red(),2) + (Math.pow(empty[1] - ClawSensor.blue(),2)) + (Math.pow(empty[2] - ClawSensor.green(),2)) ));
-       double deltaR = Math.sqrt((Math.pow(red[0] - ClawSensor.red(),2) + (Math.pow(red[1] - ClawSensor.blue(),2)) + (Math.pow(red[2] - ClawSensor.green(),2)) ));
-       double deltaB = Math.sqrt((Math.pow(blue[0] - ClawSensor.red(),2) + (Math.pow(blue[1] - ClawSensor.blue(),2)) + (Math.pow(blue[2] - ClawSensor.green(),2)) ));
-       double deltaY = Math.sqrt((Math.pow(yellow[0] - ClawSensor.red(),2) + (Math.pow(yellow[1] - ClawSensor.blue(),2)) + (Math.pow(yellow[2] - ClawSensor.green(),2)) ));
-
-
+       //Get the confidence of each and find the largest. (If the distance is far compared to others then confidence is very low)
        double emptyConfidence = 1 - (deltaE/3)*((1 / (deltaE + deltaR)) + (1/((deltaE + deltaB))) + (1/(deltaE + deltaY)));
        double redConfidence = 1 - (deltaR/3)*((1 / (deltaR + deltaE)) + (1/((deltaR + deltaB))) + (1/(deltaR + deltaY)));
        double blueConfidence = 1 - (deltaB/3)*((1 / (deltaB + deltaE)) + (1/((deltaB + deltaE))) + (1/(deltaB + deltaY)));

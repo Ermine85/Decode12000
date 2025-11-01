@@ -72,6 +72,8 @@ public class CameraGimTestScript extends LinearOpMode {
     private Servo XServo = null;
     private Servo YServo = null;
 
+    private double LastUpdate = 0;
+
     private Vector<Double> previous = new Vector<>(3);
 
     private Vector<Double> current = new Vector<>(3);
@@ -79,6 +81,8 @@ public class CameraGimTestScript extends LinearOpMode {
 
     private boolean TagFound = false;
     private double ServoPos = 0;
+    private double curDA = -100; // current delta angle
+    private double TargetPos;
 
 
     /**
@@ -99,7 +103,7 @@ public class CameraGimTestScript extends LinearOpMode {
         StartVector(current, 0, 0, 0);
 
         XServo = hardwareMap.get(Servo.class, "x_servo");
-        YServo = hardwareMap.get(Servo.class, "y_servo");
+        //YServo = hardwareMap.get(Servo.class, "y_servo");
 
         initAprilTag();
 
@@ -113,6 +117,11 @@ public class CameraGimTestScript extends LinearOpMode {
         waitForStart();
 
         if (opModeIsActive()) {
+            //VERY IMPORTANT LINE: DO NOT EDIT
+            XServo.scaleRange(0.777888,1);
+
+            XServo.setPosition(0.5);
+
             while (opModeIsActive()) {
 
                 telemetry.addData("Servo", XServo.getPosition());
@@ -129,43 +138,61 @@ public class CameraGimTestScript extends LinearOpMode {
                 }
 
 
-                if(gamepad1.a){
-                    XServo.setPosition(0.1);
-                }
-                if(gamepad1.b){
-                    XServo.setPosition(0.9);
+                if (gamepad1.a){
+                    XServo.setPosition(0.5);
                 }
 
-                /*if(TagFound){
-                    double DeltaX = 0 - (double)current.get(0);
-                    double DeltaY = (double)current.get(1);
+                //telemetry.addLine(String.format("CurrentVector:", current));
+
+                if(TagFound && !gamepad1.a){
+                    double DeltaX = 0 + (double)current.get(0);
+                    double DeltaY = Math.abs((double)current.get(1));
 
                     double DeltaA = Math.atan(DeltaX/DeltaY);
-                    if(DeltaX < 0){
-                        DeltaA += Math.PI;
-                    }
-
+                    telemetry.addData("DeltaA", DeltaA);
                     double ServoA = DeltaA / (2*Math.PI);
 
-                    ServoPos = XServo.getPosition();
 
-                    if(ServoPos + ServoA > 1){
-                        ServoPos -= 1;
-                    }else if(ServoPos + ServoA < 0){
-                        ServoPos += 1;
+                    //Logic Behind Angle Updates.
+                    //If seeing after not having seen it
+                    if(curDA == -100){
+                        curDA = ServoA;
+                        //XServo.setPosition(XServo.getPosition() + curDA);
                     }
 
-                    XServo.setPosition(ServoPos + ServoA);
+                    if(ServoA < 0){ // If negative angle
+                        if(curDA > 0){ //If it was originally positive angle (means it got to where it needed.
+                            curDA = ServoA;
+                            XServo.setPosition(XServo.getPosition() + curDA); //Gets rid of margin
+                        }
+
+                        if(ServoA < curDA){ //If the picture gets farther away from 0.
+                            double change = ServoA - (curDA * 0.8); //Get how much father + a small margin
+                            XServo.setPosition(XServo.getPosition() + change);
+                            curDA = ServoA;
+                        }
+                    }
+
+                    if(ServoA > 0){ // If positive angle
+                        if(curDA < 0){ //If it was originally negative angle (means it got to where it needed to be).
+                            curDA = ServoA;
+                            XServo.setPosition(XServo.getPosition() + curDA);
+                        }
+
+                        if(ServoA > curDA){ //If the picture gets farther away from 0.
+                            double change = ServoA - (curDA * 0.8); //Get how much father
+                            XServo.setPosition(XServo.getPosition() + change);
+                            curDA = ServoA;
+                        }
+                    }
+
+                    telemetry.addData("ServoA", ServoA);
 
                     previous = current;
                 }else{
-                    XServo.setPosition(ScanPos);
-                    if(XServo.getPosition() == 0){
-                        ScanPos = 1;
-                    }else if(XServo.getPosition() == 1){
-                        ScanPos = 0;
-                    }
-                }*/
+                    curDA = -100;
+                }
+
 
 
                 // Share the CPU.

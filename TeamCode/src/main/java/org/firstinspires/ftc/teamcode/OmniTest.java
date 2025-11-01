@@ -165,10 +165,10 @@ public class OmniTest extends LinearOpMode {
             */
 
             // Send calculated power to wheels
-            LeftFront.setPower(frontLeftPower / 2);
-            RightFront.setPower(frontRightPower / 2);
-            LeftBack.setPower(backLeftPower / 2);
-            RightBack.setPower(backRightPower / 2);
+            LeftFront.setPower(frontLeftPower / 1.5);
+            RightFront.setPower(frontRightPower / 1.5);
+            LeftBack.setPower(backLeftPower / 1.5);
+            RightBack.setPower(backRightPower / 1.5);
 
             if(gamepad1.b) {
                 Launcher.setPower(1);
