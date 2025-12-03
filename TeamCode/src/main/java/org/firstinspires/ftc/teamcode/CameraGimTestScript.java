@@ -118,7 +118,17 @@ public class CameraGimTestScript extends LinearOpMode {
 
         if (opModeIsActive()) {
             //VERY IMPORTANT LINE: DO NOT EDIT
-            XServo.scaleRange(0.777888,1);
+
+
+            /*
+
+
+
+            0.555776        0.777888     1
+               0.055528 -> 1/4
+            0.222112 = 1
+             */
+            XServo.scaleRange(0.555776 - 0.018509,0.777888 - 0.018509);
 
             XServo.setPosition(0.5);
 
@@ -145,6 +155,8 @@ public class CameraGimTestScript extends LinearOpMode {
                 //telemetry.addLine(String.format("CurrentVector:", current));
 
                 if(TagFound && !gamepad1.a){
+
+
                     double DeltaX = 0 + (double)current.get(0);
                     double DeltaY = Math.abs((double)current.get(1));
 
@@ -160,20 +172,20 @@ public class CameraGimTestScript extends LinearOpMode {
                         //XServo.setPosition(XServo.getPosition() + curDA);
                     }
 
-                    if(ServoA < 0){ // If negative angle
-                        if(curDA > 0){ //If it was originally positive angle (means it got to where it needed.
+                    if(ServoA < 0){ // If negative angle (tolerance of 0.005 both positive and negative)
+                        if(curDA > 0){ //If it was originally positive angle (means it got to where it needed).
                             curDA = ServoA;
                             XServo.setPosition(XServo.getPosition() + curDA); //Gets rid of margin
                         }
 
-                        if(ServoA < curDA){ //If the picture gets farther away from 0.
+                        if(ServoA < curDA){ //If the picture gets farther away from 0 and the current angle.
                             double change = ServoA - (curDA * 0.8); //Get how much father + a small margin
                             XServo.setPosition(XServo.getPosition() + change);
                             curDA = ServoA;
                         }
                     }
 
-                    if(ServoA > 0){ // If positive angle
+                    if(ServoA > 0){ // If positive angle (tolerance of 1 both positive and negative)
                         if(curDA < 0){ //If it was originally negative angle (means it got to where it needed to be).
                             curDA = ServoA;
                             XServo.setPosition(XServo.getPosition() + curDA);
