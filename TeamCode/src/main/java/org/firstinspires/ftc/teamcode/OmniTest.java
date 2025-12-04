@@ -221,12 +221,9 @@ public class OmniTest extends LinearOpMode {
                 RightBack.setPower(backRightPower / 3);
             }
 
-            if (LauncherVeloc < -2000){
-                LauncherMaxSpd = true;
-            }
-            else{
-                LauncherMaxSpd = false;
-            }
+
+            //Tolerance Value.
+            LauncherMaxSpd = LauncherVeloc < -2000;
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
