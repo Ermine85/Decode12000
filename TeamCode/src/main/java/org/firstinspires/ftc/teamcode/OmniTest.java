@@ -33,7 +33,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -64,7 +66,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@TeleOp(name="DRIVE", group="Linear OpMode")
+@TeleOp(name="DRIVE 2: The Sequel", group="Linear OpMode")
 //@Disabled
 public class OmniTest extends LinearOpMode {
 
@@ -76,8 +78,15 @@ public class OmniTest extends LinearOpMode {
     private DcMotor RightBack = null;
 
     private DcMotor Intake = null;
-    private DcMotor Storage = null;
-    private DcMotor Launcher = null;
+    private DcMotor Transfer = null;
+    private DcMotorEx Launcher = null;
+    private Servo LaunchServo = null;
+
+    private boolean Pressed = false;
+
+    private boolean RunLauncer = false;
+
+
 
     @Override
     public void runOpMode() {
@@ -89,8 +98,9 @@ public class OmniTest extends LinearOpMode {
         RightFront = hardwareMap.get(DcMotor.class, "RightFront");
         RightBack = hardwareMap.get(DcMotor.class, "RightBack");
         Intake = hardwareMap.get(DcMotor.class, "Intake");
-        Storage = hardwareMap.get(DcMotor.class, "Storage");
-        Launcher = hardwareMap.get(DcMotor.class, "Launcher");
+        Transfer = hardwareMap.get(DcMotor.class, "Transfer");
+        Launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
+        LaunchServo = hardwareMap.get(Servo.class, "launch_servo");
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -107,9 +117,11 @@ public class OmniTest extends LinearOpMode {
         RightFront.setDirection(DcMotor.Direction.FORWARD);
         RightBack.setDirection(DcMotor.Direction.REVERSE);
 
-        Storage.setDirection(DcMotor.Direction.FORWARD);
+        Transfer.setDirection(DcMotor.Direction.FORWARD);
         Intake.setDirection(DcMotor.Direction.FORWARD);
         Launcher.setDirection(DcMotor.Direction.FORWARD);
+
+        Launcher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
@@ -117,10 +129,15 @@ public class OmniTest extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
+        LaunchServo.setPosition(1);
+
+        boolean LauncherMaxSpd = false;
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             double max;
+
+            double LauncherVeloc = Launcher.getVelocity();
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
             double axial   =  -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
@@ -146,7 +163,33 @@ public class OmniTest extends LinearOpMode {
                 backLeftPower   /= max;
                 backRightPower  /= max;
             }
+            LaunchServo.scaleRange(0.72, 1);
 
+            Intake.setPower(-gamepad1.left_trigger);
+
+            Transfer.setPower(gamepad1.left_trigger/1.75);
+
+
+            if(gamepad1.right_bumper && !Pressed){
+                RunLauncer = !RunLauncer;
+                Pressed = true;
+            }else if(!gamepad1.right_bumper){
+                Pressed = false;
+            }
+
+            if(RunLauncer){
+                Launcher.setVelocity(-3800);
+            }else{
+                Launcher.setVelocity(-gamepad1.right_trigger * 3800);
+            }
+
+            if(gamepad1.b && LauncherMaxSpd){
+                LaunchServo.setPosition(0);
+            }else{
+                LaunchServo.setPosition(1);
+            }
+
+            telemetry.addData("Servo Pos", LaunchServo.getPosition());
             // This is test code:
             //
             // Uncomment the following code to test your motor directions.
@@ -165,35 +208,29 @@ public class OmniTest extends LinearOpMode {
             */
 
             // Send calculated power to wheels
-            LeftFront.setPower(frontLeftPower / 1.5);
-            RightFront.setPower(frontRightPower / 1.5);
-            LeftBack.setPower(backLeftPower / 1.5);
-            RightBack.setPower(backRightPower / 1.5);
-
-            if(gamepad1.b) {
-                Launcher.setPower(1);
-            } else {
-                Launcher.setPower(0);
+            if(!gamepad1.dpad_down){
+                LeftFront.setPower(frontLeftPower / 1.5);
+                RightFront.setPower(frontRightPower / 1.5);
+                LeftBack.setPower(backLeftPower / 1.5);
+                RightBack.setPower(backRightPower / 1.5);
             }
-
-            if(gamepad1.right_trigger > 0){
-                Storage.setPower(0.5);
-            }else{
-                Storage.setPower(0);
+            else{
+                LeftFront.setPower(frontLeftPower / 3);
+                RightFront.setPower(frontRightPower / 3);
+                LeftBack.setPower(backLeftPower / 3);
+                RightBack.setPower(backRightPower / 3);
             }
 
 
-            if(gamepad1.left_trigger > 0) {
-                Intake.setPower(0.5);
-            } else {
-                Intake.setPower(0);
-            }
-
+            //Tolerance Value.
+            LauncherMaxSpd = LauncherVeloc < -2000;
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
+            telemetry.addData("Motor Speed", "%.2f", LauncherVeloc);
+            telemetry.addData("Is Launcher at full speed?", LauncherMaxSpd);
             telemetry.update();
         }
     }}
