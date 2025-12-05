@@ -32,6 +32,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -63,6 +65,15 @@ public class MoveAuto extends LinearOpMode {
     private DcMotor RF = null;
     private DcMotor RB = null;
 
+    private DcMotor Intake = null;
+    private DcMotor Transfer = null;
+    private DcMotorEx Launcher = null;
+    private Servo LaunchServo = null;
+
+    private boolean Pressed = false;
+
+    private boolean RunLauncer = false;
+
 
     @Override
     public void runOpMode() {
@@ -72,6 +83,10 @@ public class MoveAuto extends LinearOpMode {
         LB = hardwareMap.get(DcMotor.class, "LeftBack");
         RF = hardwareMap.get(DcMotor.class, "RightFront");
         RB = hardwareMap.get(DcMotor.class, "RightBack");
+        Intake = hardwareMap.get(DcMotor.class, "Intake");
+        Transfer = hardwareMap.get(DcMotor.class, "Transfer");
+        Launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
+        LaunchServo = hardwareMap.get(Servo.class, "launch_servo");
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
@@ -81,12 +96,21 @@ public class MoveAuto extends LinearOpMode {
         RF.setDirection(DcMotor.Direction.FORWARD);
         RB.setDirection(DcMotor.Direction.REVERSE);
 
+        Transfer.setDirection(DcMotor.Direction.FORWARD);
+        Intake.setDirection(DcMotor.Direction.FORWARD);
+        Launcher.setDirection(DcMotor.Direction.FORWARD);
+
+        Launcher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Status", "Ready to run");    //
         telemetry.update();
 
         // Wait for the game to start (driver presses START)
         waitForStart();
+        LaunchServo.setPosition(1);
+
+        boolean LauncherMaxSpd = false;
 
         if(opModeIsActive()){
             sleep(1000);
@@ -96,18 +120,59 @@ public class MoveAuto extends LinearOpMode {
             RF.setPower(-0.5);
             RB.setPower(-0.5);
 
-            sleep(1250);
+            sleep(1500);
+
+            LF.setPower(0.5);
+            LB.setPower(0.5);
+            RF.setPower(0.5);
+            RB.setPower(0.5);
+
+            sleep(2000);
 
             LF.setPower(0);
             LB.setPower(0);
             RF.setPower(0);
             RB.setPower(0);
 
-            sleep(2000);
+        }
+        while (opModeIsActive()){
+            double LauncherVeloc = Launcher.getVelocity();
 
+            LaunchServo.scaleRange(0.72, 1);
+
+
+            Intake.setPower(-gamepad1.left_trigger);
+
+            Transfer.setPower(gamepad1.left_trigger/1.75);
+
+
+            if(gamepad1.right_bumper && !Pressed){
+                RunLauncer = !RunLauncer;
+                Pressed = true;
+            }else if(!gamepad1.right_bumper){
+                Pressed = false;
+            }
+
+            if(RunLauncer){
+                Launcher.setVelocity(-3800);
+            }else{
+                Launcher.setVelocity(-gamepad1.right_trigger * 3800);
+            }
+
+            if(gamepad1.b && LauncherMaxSpd || gamepad1.start){
+                LaunchServo.setPosition(0);
+            }else {
+                LaunchServo.setPosition(1);
+            }
+
+
+            LauncherMaxSpd = LauncherVeloc < -2000;
+
+            telemetry.addData("Is Launcher at full speed?", LauncherMaxSpd);
+            }
         }
 
 
 
     }
-}
+
