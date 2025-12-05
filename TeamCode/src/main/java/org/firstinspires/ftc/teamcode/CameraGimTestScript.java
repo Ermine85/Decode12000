@@ -76,6 +76,7 @@ public class CameraGimTestScript extends LinearOpMode {
 
     private double LastUpdate = 0;
 
+    private double wantedDistance;
     private Vector<Double> previous = new Vector<>(3);
 
     private Vector<Double> current = new Vector<>(3);
@@ -175,16 +176,13 @@ public class CameraGimTestScript extends LinearOpMode {
 
         if (opModeIsActive()) {
             //VERY IMPORTANT LINE: DO NOT EDIT
-
-
             /*
-
-
-
             0.555776        0.777888     1
                0.055528 -> 1/4
             0.222112 = 1
              */
+
+
             XServo.scaleRange(0.555776 - 0.018509,0.777888 - 0.018509);
 
             XServo.setPosition(0.5);
@@ -215,52 +213,7 @@ public class CameraGimTestScript extends LinearOpMode {
                 //telemetry.addLine(String.format("CurrentVector:", current));
 
                 if(TagFound && !gamepad1.a){
-
-
-                    double DeltaX = 0 + (double)current.get(0);
-                    double DeltaY = Math.abs((double)current.get(1));
-
-                    double DeltaA = Math.atan(DeltaX/DeltaY);
-                    telemetry.addData("DeltaA", DeltaA);
-                    double ServoA = DeltaA / (2*Math.PI);
-
-
-                    //Logic Behind Angle Updates.
-                    //If seeing after not having seen it
-                    if(curDA == -100){
-                        curDA = ServoA;
-                        //XServo.setPosition(XServo.getPosition() + curDA);
-                    }
-
-                    if(ServoA < 0){ // If negative angle (tolerance of 0.005 both positive and negative)
-                        if(curDA > 0){ //If it was originally positive angle (means it got to where it needed).
-                            curDA = ServoA;
-                            XServo.setPosition(XServo.getPosition() + curDA); //Gets rid of margin
-                        }
-
-                        if(ServoA < curDA){ //If the picture gets farther away from 0 and the current angle.
-                            double change = ServoA - (curDA * 0.8); //Get how much father + a small margin
-                            XServo.setPosition(XServo.getPosition() + change);
-                            curDA = ServoA;
-                        }
-                    }
-
-                    if(ServoA > 0){ // If positive angle (tolerance of 1 both positive and negative)
-                        if(curDA < 0){ //If it was originally negative angle (means it got to where it needed to be).
-                            curDA = ServoA;
-                            XServo.setPosition(XServo.getPosition() + curDA);
-                        }
-
-                        if(ServoA > curDA){ //If the picture gets farther away from 0.
-                            double change = ServoA - (curDA * 0.8); //Get how much father
-                            XServo.setPosition(XServo.getPosition() + change);
-                            curDA = ServoA;
-                        }
-                    }
-
-                    telemetry.addData("ServoA", ServoA);
-
-                    previous = current;
+                    GimTrack();
                 }else{
                     curDA = -100;
                 }
@@ -349,5 +302,101 @@ public class CameraGimTestScript extends LinearOpMode {
         vector.add(X);
         vector.add(Y);
         vector.add(Z);
+    }
+
+    public void GimTrack(){
+        double DeltaX = 0 + current.get(0);
+        double DeltaY = Math.abs(current.get(1));
+
+        double DeltaA = Math.atan(DeltaX/DeltaY);
+        telemetry.addData("DeltaA", DeltaA);
+        double ServoA = DeltaA / (2*Math.PI);
+
+
+        //Logic Behind Angle Updates.
+        //If seeing after not having seen it
+        if(curDA == -100){
+            curDA = ServoA;
+            //XServo.setPosition(XServo.getPosition() + curDA);
+        }
+
+        if(ServoA < 0){ // If negative angle (tolerance of 0.005 both positive and negative)
+            if(curDA > 0){ //If it was originally positive angle (means it got to where it needed).
+                curDA = ServoA;
+                XServo.setPosition(XServo.getPosition() + curDA); //Gets rid of margin
+            }
+
+            if(ServoA < curDA){ //If the picture gets farther away from 0 and the current angle.
+                double change = ServoA - (curDA * 0.8); //Get how much father + a small margin
+                XServo.setPosition(XServo.getPosition() + change);
+                curDA = ServoA;
+            }
+        }
+
+        if(ServoA > 0){ // If positive angle (tolerance of 1 both positive and negative)
+            if(curDA < 0){ //If it was originally negative angle (means it got to where it needed to be).
+                curDA = ServoA;
+                XServo.setPosition(XServo.getPosition() + curDA);
+            }
+
+            if(ServoA > curDA){ //If the picture gets farther away from 0.
+                double change = ServoA - (curDA * 0.8); //Get how much father
+                XServo.setPosition(XServo.getPosition() + change);
+                curDA = ServoA;
+            }
+        }
+
+        telemetry.addData("ServoA", ServoA);
+
+        previous = current;
+    }
+
+    public void MoveToDistance(double distanceX, double distanceY, double speed){
+
+        double servoPos = XServo.getPosition();
+        double deltaX = distanceX - current.get(0);
+        double deltaY = distanceY - current.get(0);
+
+        double angle = 0;
+        double deltaA = 0;
+        double distance = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
+
+        //0.1 is tolerance
+        while(Math.abs(distance) > 0.1){
+
+            //Update Values Needed In loop
+            telemetryAprilTag(); //Edits current
+
+            deltaX = distanceX - current.get(0);
+            deltaY = distanceY - current.get(1);
+            distance = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
+            angle = Math.PI - (ServoPos * 2 * Math.PI);
+
+            deltaA = Math.atan(deltaX/deltaY);
+            angle += deltaA;
+
+            //Motor Power
+            double F = 1;//ADD + 0.5*(RobotYaw - TargetAngle)
+            double M1 = F*(Math.sin(angle) + Math.cos(angle)); //LF
+            double M2 = F*(Math.sin(angle) - Math.cos(angle));//RF
+            double M3 = F*(-Math.sin(angle) + Math.cos(angle));//LB
+            double M4 = F*(-Math.sin(angle) - Math.cos(angle));//RB
+            double Mmax;
+            //Gets the Highest Value of the 4
+            Mmax = Math.max(M1, M2);
+            Mmax = Math.max(Mmax, M3);
+            Mmax = Math.max(Mmax, M4);
+            //Scales all Values by Highest to give all a value from 0-1
+            if(Mmax > 1)
+            {
+                M1 = M1/Mmax;
+                M2 = M2/Mmax;
+                M3 = M3/Mmax;
+                M4 = M4/Mmax;
+            }
+
+            //Code to set motors to speeds above.
+        }
+
     }
 }   // end class
