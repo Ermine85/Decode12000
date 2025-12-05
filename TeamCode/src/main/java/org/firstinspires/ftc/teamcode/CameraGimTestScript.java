@@ -37,6 +37,8 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.CRServo;
 
@@ -85,6 +87,26 @@ public class CameraGimTestScript extends LinearOpMode {
     private double curDA = -100; // current delta angle
     private double TargetPos;
 
+    //These are the motors
+    private DcMotor LeftFront = null;
+    private DcMotor LeftBack = null;
+    private DcMotor RightFront = null;
+    private DcMotor RightBack = null;
+
+    private DcMotor Intake = null;
+    private DcMotor Storage = null;
+    private DcMotor Launcher = null;
+
+    private int[] aprilTagId = new int[3];
+
+    private double RobotAngle = 0;
+    private double RobotX = 0;
+    private double RobotY = 0;
+    private double RobotZ = 0;
+
+    private double AprilTagX = 0;
+    private double AprilTagY = 0;
+    private double AprilTagZ = 0;
 
     /**
      * The variable to store our instance of the AprilTag processor.
@@ -98,6 +120,41 @@ public class CameraGimTestScript extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+
+        // Initialize the hardware variables. Note that the strings used here must correspond
+        // to the names assigned during the robot configuration step on the DS or RC devices.
+        LeftFront = hardwareMap.get(DcMotor.class, "LeftFront");
+        LeftBack = hardwareMap.get(DcMotor.class, "LeftBack");
+        RightFront = hardwareMap.get(DcMotor.class, "RightFront");
+        RightBack = hardwareMap.get(DcMotor.class, "RightBack");
+        Intake = hardwareMap.get(DcMotor.class, "Intake");
+        Storage = hardwareMap.get(DcMotor.class, "Storage");
+        Launcher = hardwareMap.get(DcMotor.class, "Launcher");
+
+        // ########################################################################################
+        // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
+        // ########################################################################################
+        // Most robots need the motors on one side to be reversed to drive forward.
+        // The motor reversals shown here are for a "direct drive" robot (the wheels turn the same direction as the motor shaft)
+        // If your robot has additional gear reductions or uses a right-angled drive, it's important to ensure
+        // that your motors are turning in the correct direction.  So, start out with the reversals here, BUT
+        // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
+        // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
+        // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
+        LeftFront.setDirection(DcMotor.Direction.FORWARD);
+        LeftBack.setDirection(DcMotor.Direction.REVERSE);
+        RightFront.setDirection(DcMotor.Direction.FORWARD);
+        RightBack.setDirection(DcMotor.Direction.REVERSE);
+
+        Storage.setDirection(DcMotor.Direction.FORWARD);
+        Intake.setDirection(DcMotor.Direction.FORWARD);
+        Launcher.setDirection(DcMotor.Direction.FORWARD);
+
+        //Set Tags
+        aprilTagId[0] = 22; //Change? Blue
+        aprilTagId[1] = 21; //Change? Red
+        aprilTagId[2] = 23; //Change? middle
+
 
         StartVector(previous, 0, 0, 0);
 
@@ -133,7 +190,10 @@ public class CameraGimTestScript extends LinearOpMode {
             while (opModeIsActive()) {
 
                 telemetry.addData("Servo", XServo.getPosition());
-                telemetryAprilTag();
+
+
+
+                telemetryAprilTag(aprilTagId[0]);
 
                 // Push telemetry to the Driver Station.
                 telemetry.update();
@@ -192,7 +252,10 @@ public class CameraGimTestScript extends LinearOpMode {
     /**
      * Add telemetry about AprilTag detections.
      */
-    private void telemetryAprilTag() {
+    private void moveToTarget(double tarX, double tarY, double ServoStartAngel) {
+
+    }
+    private void telemetryAprilTag(int Id) {
 
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         telemetry.addData("# AprilTags Detected", currentDetections.size());
@@ -201,7 +264,7 @@ public class CameraGimTestScript extends LinearOpMode {
 
         // Step through the list of detections and display info for each one.
         for (AprilTagDetection detection : currentDetections) {
-            if (detection.metadata != null) {
+            if (detection.metadata != null && detection.metadata.id == Id) {
 
                 SetVector(current, detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z);
 
@@ -209,6 +272,11 @@ public class CameraGimTestScript extends LinearOpMode {
                 telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
                 telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
                 telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
+
+                AprilTagX = detection.ftcPose.x;
+                AprilTagY = detection.ftcPose.y;
+                AprilTagZ = detection.ftcPose.z;
+
             } else {
                 telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
                 telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
