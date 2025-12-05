@@ -122,12 +122,37 @@ public class MoveAuto extends LinearOpMode {
 
             sleep(1500);
 
+            LF.setPower(0);
+            LB.setPower(0);
+            RF.setPower(0);
+            RB.setPower(0);
+
+            Launcher.setVelocity(-3800);
+
+            sleep(1500);
+
+            Transfer.setPower(0.5);
+            Intake.setPower(-1);
+
+            sleep(2500);
+
+            Launcher.setVelocity(0);
+            Transfer.setPower(0);
+            Intake.setPower(0);
+
             LF.setPower(0.5);
             LB.setPower(0.5);
             RF.setPower(0.5);
             RB.setPower(0.5);
 
-            sleep(2000);
+            sleep(250);
+
+            LF.setPower(0.5);
+            LB.setPower(0.5);
+            RF.setPower(-0.5);
+            RB.setPower(-0.5);
+
+            sleep(900);
 
             LF.setPower(0);
             LB.setPower(0);
@@ -140,7 +165,7 @@ public class MoveAuto extends LinearOpMode {
 
             LaunchServo.scaleRange(0.72, 1);
 
-
+            /*
             Intake.setPower(-gamepad1.left_trigger);
 
             Transfer.setPower(gamepad1.left_trigger/1.75);
@@ -164,7 +189,7 @@ public class MoveAuto extends LinearOpMode {
             }else {
                 LaunchServo.setPosition(1);
             }
-
+            */
 
             LauncherMaxSpd = LauncherVeloc < -2000;
 
