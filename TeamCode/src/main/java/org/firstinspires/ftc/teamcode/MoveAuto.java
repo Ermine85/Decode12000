@@ -163,13 +163,16 @@ public class MoveAuto extends LinearOpMode {
         while (opModeIsActive()){
             double LauncherVeloc = Launcher.getVelocity();
 
-            LaunchServo.scaleRange(0.72, 1);
+            LaunchServo.scaleRange(0.73, 0.83);
 
             /*
             Intake.setPower(-gamepad1.left_trigger);
 
             Transfer.setPower(gamepad1.left_trigger/1.75);
 
+            if(gamepad1.left_bumper){
+                Transfer.setPower((1/1.75));
+            }
 
             if(gamepad1.right_bumper && !Pressed){
                 RunLauncer = !RunLauncer;
@@ -191,7 +194,7 @@ public class MoveAuto extends LinearOpMode {
             }
             */
 
-            LauncherMaxSpd = LauncherVeloc < -2000;
+            LauncherMaxSpd = LauncherVeloc < -2100;
 
             telemetry.addData("Is Launcher at full speed?", LauncherMaxSpd);
             }
