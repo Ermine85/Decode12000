@@ -128,6 +128,7 @@ public class OmniTest extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
+
         runtime.reset();
         LaunchServo.setPosition(1);
 
@@ -163,12 +164,15 @@ public class OmniTest extends LinearOpMode {
                 backLeftPower   /= max;
                 backRightPower  /= max;
             }
-            LaunchServo.scaleRange(0.72, 1);
+            LaunchServo.scaleRange(0.73, 0.83);
 
             Intake.setPower(-gamepad1.left_trigger);
 
             Transfer.setPower(gamepad1.left_trigger/1.75);
 
+            if(gamepad1.left_bumper){
+                Transfer.setPower((1/1.75));
+            }
 
             if(gamepad1.right_bumper && !Pressed){
                 RunLauncer = !RunLauncer;
@@ -184,9 +188,9 @@ public class OmniTest extends LinearOpMode {
             }
 
             if(gamepad1.b && LauncherMaxSpd || gamepad1.start){
-                LaunchServo.setPosition(0);
+                LaunchServo.setPosition(0); //Down
             }else{
-                LaunchServo.setPosition(1);
+                LaunchServo.setPosition(1); // Up
             }
 
             /*
@@ -196,6 +200,7 @@ public class OmniTest extends LinearOpMode {
                 LaunchServo.setPosition(1);
             }
             */
+
 
             telemetry.addData("Servo Pos", LaunchServo.getPosition());
             // This is test code:
@@ -231,7 +236,7 @@ public class OmniTest extends LinearOpMode {
 
 
             //Tolerance Value.
-            LauncherMaxSpd = LauncherVeloc < -2000;
+            LauncherMaxSpd = LauncherVeloc < -2100;
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
