@@ -84,7 +84,8 @@ public class CameraGimTestScript extends LinearOpMode {
 
     private boolean TagFound = false;
     private double ServoPos = 0;
-    private double curDA = -100; // current delta angle
+    private double curDAX = -100; // current delta angle
+    private double curDAY;
     private double TargetPos;
 
     //These are the motors
@@ -127,9 +128,9 @@ public class CameraGimTestScript extends LinearOpMode {
         LeftBack = hardwareMap.get(DcMotor.class, "LeftBack");
         RightFront = hardwareMap.get(DcMotor.class, "RightFront");
         RightBack = hardwareMap.get(DcMotor.class, "RightBack");
-        Intake = hardwareMap.get(DcMotor.class, "Intake");
-        Storage = hardwareMap.get(DcMotor.class, "Storage");
-        Launcher = hardwareMap.get(DcMotor.class, "Launcher");
+        //Intake = hardwareMap.get(DcMotor.class, "Intake");
+        //Storage = hardwareMap.get(DcMotor.class, "Storage");
+        //Launcher = hardwareMap.get(DcMotor.class, "Launcher");
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -146,9 +147,9 @@ public class CameraGimTestScript extends LinearOpMode {
         RightFront.setDirection(DcMotor.Direction.FORWARD);
         RightBack.setDirection(DcMotor.Direction.REVERSE);
 
-        Storage.setDirection(DcMotor.Direction.FORWARD);
-        Intake.setDirection(DcMotor.Direction.FORWARD);
-        Launcher.setDirection(DcMotor.Direction.FORWARD);
+        //Storage.setDirection(DcMotor.Direction.FORWARD);
+        //Intake.setDirection(DcMotor.Direction.FORWARD);
+        //Launcher.setDirection(DcMotor.Direction.FORWARD);
 
         //Set Tags
         aprilTagId[0] = 22; //Change? Blue
@@ -161,7 +162,7 @@ public class CameraGimTestScript extends LinearOpMode {
         StartVector(current, 0, 0, 0);
 
         XServo = hardwareMap.get(Servo.class, "x_servo");
-        //YServo = hardwareMap.get(Servo.class, "y_servo");
+        YServo = hardwareMap.get(Servo.class, "y_servo");
 
         initAprilTag();
 
@@ -181,8 +182,6 @@ public class CameraGimTestScript extends LinearOpMode {
                0.055528 -> 1/4
             0.222112 = 1
              */
-
-
             XServo.scaleRange(0.555776 - 0.018509,0.777888 - 0.018509);
 
             XServo.setPosition(0.5);
@@ -191,9 +190,6 @@ public class CameraGimTestScript extends LinearOpMode {
 
                 telemetry.addData("Servo", XServo.getPosition());
 
-
-
-                telemetryAprilTag(aprilTagId[0]);
 
                 // Push telemetry to the Driver Station.
                 telemetry.update();
@@ -206,16 +202,19 @@ public class CameraGimTestScript extends LinearOpMode {
                 }
 
 
+                if(gamepad1.x){
+                    telemetryAprilTag(0);
+                    GimTrack();
+                }
+
                 if (gamepad1.a){
                     XServo.setPosition(0.5);
                 }
 
                 //telemetry.addLine(String.format("CurrentVector:", current));
 
-                if(TagFound && !gamepad1.a){
-                    GimTrack();
-                }else{
-                    curDA = -100;
+                if (gamepad1.start){
+                    MoveToDistance(0, 23.4, 0.5);
                 }
 
 
@@ -264,7 +263,7 @@ public class CameraGimTestScript extends LinearOpMode {
 
         // Step through the list of detections and display info for each one.
         for (AprilTagDetection detection : currentDetections) {
-            if (detection.metadata != null && detection.metadata.id == Id) {
+            if ((detection.metadata != null && detection.metadata.id == Id) || (detection.metadata != null && Id == 0)) {
 
                 SetVector(current, detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z);
 
@@ -280,6 +279,7 @@ public class CameraGimTestScript extends LinearOpMode {
             } else {
                 telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
                 telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+                curDAX = -100; // reset number
             }
         }   // end for() loop
 
@@ -307,46 +307,78 @@ public class CameraGimTestScript extends LinearOpMode {
     public void GimTrack(){
         double DeltaX = 0 + current.get(0);
         double DeltaY = Math.abs(current.get(1));
+        double DeltaZ = Math.abs(current.get(2));
 
-        double DeltaA = Math.atan(DeltaX/DeltaY);
-        telemetry.addData("DeltaA", DeltaA);
-        double ServoA = DeltaA / (2*Math.PI);
+        double DeltaAY = Math.atan(DeltaZ/DeltaY);
+        double DeltaAX = Math.atan(DeltaX/DeltaY);
+
+        telemetry.addData("DeltaAX", DeltaAX);
+        telemetry.addData("DeltaAY", DeltaAY);
+
+        double ServoAX = DeltaAX / (2*Math.PI);
+        double ServoAY = DeltaAY/(80*Math.PI/180);
 
 
         //Logic Behind Angle Updates.
         //If seeing after not having seen it
-        if(curDA == -100){
-            curDA = ServoA;
+
+        if(curDAX == -100){
+            curDAX = ServoAX;
+            curDAY = ServoAY;
             //XServo.setPosition(XServo.getPosition() + curDA);
         }
 
-        if(ServoA < 0){ // If negative angle (tolerance of 0.005 both positive and negative)
-            if(curDA > 0){ //If it was originally positive angle (means it got to where it needed).
-                curDA = ServoA;
-                XServo.setPosition(XServo.getPosition() + curDA); //Gets rid of margin
+        if(ServoAX < 0){ // If negative angle (tolerance of 0.005 both positive and negative)
+            if(curDAX > 0){ //If it was originally positive angle (means it got to where it needed).
+                curDAX = ServoAX;
+                XServo.setPosition(XServo.getPosition() + curDAX); //Gets rid of margin
             }
 
-            if(ServoA < curDA){ //If the picture gets farther away from 0 and the current angle.
-                double change = ServoA - (curDA * 0.8); //Get how much father + a small margin
+            if(ServoAX < curDAX){ //If the picture gets farther away from 0 and the current angle.
+                double change = ServoAX - (curDAX * 0.8); //Get how much father + a small margin
                 XServo.setPosition(XServo.getPosition() + change);
-                curDA = ServoA;
+                curDAX = ServoAX;
+            }
+        }
+        if(ServoAY < 0){ // If negative angle (tolerance of 0.005 both positive and negative)
+            if(curDAY > 0){ //If it was originally positive angle (means it got to where it needed).
+                curDAY = ServoAY;
+                YServo.setPosition(YServo.getPosition() + curDAY); //Gets rid of margin
+            }
+
+            if(ServoAY < curDAY){ //If the picture gets farther away from 0 and the current angle.
+                double change = ServoAY - (curDAY * 0.8); //Get how much father + a small margin
+                YServo.setPosition(YServo.getPosition() + change);
+                curDAY = ServoAY;
             }
         }
 
-        if(ServoA > 0){ // If positive angle (tolerance of 1 both positive and negative)
-            if(curDA < 0){ //If it was originally negative angle (means it got to where it needed to be).
-                curDA = ServoA;
-                XServo.setPosition(XServo.getPosition() + curDA);
+        if(ServoAX > 0){ // If positive angle (tolerance of 1 both positive and negative)
+            if(curDAX < 0){ //If it was originally negative angle (means it got to where it needed to be).
+                curDAX = ServoAX;
+                XServo.setPosition(XServo.getPosition() + curDAX);
             }
 
-            if(ServoA > curDA){ //If the picture gets farther away from 0.
-                double change = ServoA - (curDA * 0.8); //Get how much father
+            if(ServoAX > curDAX){ //If the picture gets farther away from 0.
+                double change = ServoAX - (curDAX * 0.8); //Get how much father
                 XServo.setPosition(XServo.getPosition() + change);
-                curDA = ServoA;
+                curDAX = ServoAX;
+            }
+        }
+        if(ServoAY > 0){ // If positive angle (tolerance of 1 both positive and negative)
+            if(curDAY < 0){ //If it was originally negative angle (means it got to where it needed to be).
+                curDAY = ServoAY;
+                YServo.setPosition(YServo.getPosition() + curDAY);
+            }
+
+            if(ServoAY > curDAY){ //If the picture gets farther away from 0.
+                double change = ServoAY - (curDAY * 0.8); //Get how much father
+                YServo.setPosition(YServo.getPosition() + change);
+                curDAY = ServoAY;
             }
         }
 
-        telemetry.addData("ServoA", ServoA);
+        telemetry.addData("ServoAX", ServoAX);
 
         previous = current;
     }
@@ -365,7 +397,8 @@ public class CameraGimTestScript extends LinearOpMode {
         while(Math.abs(distance) > 0.1){
 
             //Update Values Needed In loop
-            telemetryAprilTag(); //Edits current
+            telemetryAprilTag(0); //Edits current
+            GimTrack();
 
             deltaX = distanceX - current.get(0);
             deltaY = distanceY - current.get(1);
@@ -395,8 +428,18 @@ public class CameraGimTestScript extends LinearOpMode {
                 M4 = M4/Mmax;
             }
 
+            RightBack.setPower(M4);
+            LeftBack.setPower(M3);
+            LeftFront.setPower(M1);
+            RightFront.setPower(M2);
             //Code to set motors to speeds above.
         }
+
+        RightBack.setPower(0);
+        LeftBack.setPower(0);
+        LeftFront.setPower(0);
+        RightFront.setPower(0);
+
 
     }
 }   // end class
