@@ -93,8 +93,8 @@ public class MoveAuto extends LinearOpMode {
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
         LF.setDirection(DcMotor.Direction.FORWARD);
         LB.setDirection(DcMotor.Direction.REVERSE);
-        RF.setDirection(DcMotor.Direction.FORWARD);
-        RB.setDirection(DcMotor.Direction.REVERSE);
+        RF.setDirection(DcMotor.Direction.REVERSE);
+        RB.setDirection(DcMotor.Direction.FORWARD);
 
         Transfer.setDirection(DcMotor.Direction.FORWARD);
         Intake.setDirection(DcMotor.Direction.FORWARD);
@@ -110,6 +110,8 @@ public class MoveAuto extends LinearOpMode {
         waitForStart();
         LaunchServo.setPosition(1);
 
+        LaunchServo.scaleRange(0.73, 0.83);
+
         boolean LauncherMaxSpd = false;
 
         if(opModeIsActive()){
@@ -117,8 +119,8 @@ public class MoveAuto extends LinearOpMode {
 
             LF.setPower(0.5);
             LB.setPower(0.5);
-            RF.setPower(-0.5);
-            RB.setPower(-0.5);
+            RF.setPower(0.5);
+            RB.setPower(0.5);
 
             sleep(1500);
 
@@ -127,10 +129,12 @@ public class MoveAuto extends LinearOpMode {
             RF.setPower(0);
             RB.setPower(0);
 
-            Launcher.setVelocity(-3800);
+            Launcher.setVelocity(-2100);
 
-            sleep(1500);
+            sleep(1000);
+            LaunchServo.setPosition(0);
 
+            sleep( 1500);
             Transfer.setPower(0.5);
             Intake.setPower(-1);
 
@@ -140,17 +144,54 @@ public class MoveAuto extends LinearOpMode {
             Transfer.setPower(0);
             Intake.setPower(0);
 
+            sleep(1000);
+
             LF.setPower(0.5);
             LB.setPower(0.5);
             RF.setPower(0.5);
             RB.setPower(0.5);
 
-            sleep(250);
+            sleep(1500);
+
+            LF.setPower(0);
+            LB.setPower(0);
+            RF.setPower(0);
+            RB.setPower(0);
+
+            sleep(500);
 
             LF.setPower(0.5);
             LB.setPower(0.5);
             RF.setPower(-0.5);
             RB.setPower(-0.5);
+
+            sleep(500);
+
+            LF.setPower(0);
+            LB.setPower(0);
+            RF.setPower(0);
+            RB.setPower(0);
+
+            sleep(500);
+
+            LF.setPower(0.5);
+            LB.setPower(0.5);
+            RF.setPower(0.5);
+            RB.setPower(0.5);
+
+            sleep(1500);
+
+            LF.setPower(0);
+            LB.setPower(0);
+            RF.setPower(0);
+            RB.setPower(0);
+
+            /*sleep(250);
+
+            LF.setPower(0.5);
+            LB.setPower(0.5);
+            RF.setPower(0.5);
+            RB.setPower(0.5);
 
             sleep(900);
 
@@ -158,12 +199,12 @@ public class MoveAuto extends LinearOpMode {
             LB.setPower(0);
             RF.setPower(0);
             RB.setPower(0);
-
+            */
         }
-        while (opModeIsActive()){
-            double LauncherVeloc = Launcher.getVelocity();
+       // while (opModeIsActive()){
+       //     double LauncherVeloc = Launcher.getVelocity();
 
-            LaunchServo.scaleRange(0.73, 0.83);
+        //    LaunchServo.scaleRange(0.73, 0.83);
 
             /*
             Intake.setPower(-gamepad1.left_trigger);
@@ -194,10 +235,10 @@ public class MoveAuto extends LinearOpMode {
             }
             */
 
-            LauncherMaxSpd = LauncherVeloc < -2100;
+      //      LauncherMaxSpd = LauncherVeloc < -2100;
 
-            telemetry.addData("Is Launcher at full speed?", LauncherMaxSpd);
-            }
+        //    telemetry.addData("Is Launcher at full speed?", LauncherMaxSpd);
+          //  }
         }
 
 
