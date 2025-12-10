@@ -328,6 +328,8 @@ public class CameraGimTestScript extends LinearOpMode {
             //XServo.setPosition(XServo.getPosition() + curDA);
         }
 
+
+
         if(ServoAX < 0){ // If negative angle (tolerance of 0.005 both positive and negative)
             if(curDAX > 0){ //If it was originally positive angle (means it got to where it needed).
                 curDAX = ServoAX;
@@ -407,6 +409,7 @@ public class CameraGimTestScript extends LinearOpMode {
 
             deltaA = Math.atan(deltaX/deltaY);
             angle += deltaA;
+
 
             //Motor Power
             double F = 1;//ADD + 0.5*(RobotYaw - TargetAngle)

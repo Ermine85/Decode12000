@@ -36,6 +36,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.BatteryChecker;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -190,6 +191,7 @@ public class OmniTest extends LinearOpMode {
             if(gamepad1.b && LauncherMaxSpd || gamepad1.start){
                 LaunchServo.setPosition(0); //Down
             }else{
+
                 LaunchServo.setPosition(1); // Up
             }
 
