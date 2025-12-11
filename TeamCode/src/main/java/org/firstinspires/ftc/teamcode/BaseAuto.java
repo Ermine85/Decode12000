@@ -25,9 +25,11 @@ public class BaseAuto extends LinearOpMode{
     //Variable creation
 
     private DcMotor RF = null;
-    private DcMotor LFE = null;
+    private DcMotor LF = null;
     private DcMotor RB = null;
     private DcMotor LB = null;
+
+    private DcMotor Encoder = null;
 
     private DcMotor leftEncoderMotor = null;
     private DcMotor rightEncoderMotor = null;
@@ -36,15 +38,18 @@ public class BaseAuto extends LinearOpMode{
     public void runOpMode(){
         //Variable initiation
 
-        LFE = hardwareMap.get(DcMotor.class, "LeftFront");
+        LF = hardwareMap.get(DcMotor.class, "LeftFront");
         LB = hardwareMap.get(DcMotor.class, "LeftBack");
         RF = hardwareMap.get(DcMotor.class, "RightFront");
         RB = hardwareMap.get(DcMotor.class, "RightBack");
 
-        LFE.setDirection(DcMotor.Direction.FORWARD);
+        Encoder = hardwareMap.get(DcMotor.class, "Encoder");
+
+        LF.setDirection(DcMotor.Direction.FORWARD);
         LB.setDirection(DcMotor.Direction.REVERSE);
         RF.setDirection(DcMotor.Direction.REVERSE);
         RB.setDirection(DcMotor.Direction.FORWARD);
+
 
         //leftEncoderMotor = hardwareMap.get(DcMotor.class, "LeftFront");
         //rightEncoderMotor = hardwareMap.get(DcMotor.class, "RightFront");
@@ -53,19 +58,20 @@ public class BaseAuto extends LinearOpMode{
 
         //Auto Script
 
-        goVroom(80000,0.5f);
+        goVroom(16000,0.25f);
 
 
     }
 
     public void goVroom(int Distance, float Speed){
 
-        LFE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        LFE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        Encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        Encoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        LB.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        RF.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        RB.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        LF.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        LB.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        RF.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        RB.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
         //leftEncoderMotor.setTargetPosition(Distance);
@@ -74,19 +80,19 @@ public class BaseAuto extends LinearOpMode{
         //leftEncoderMotor.setPower(Speed);
         //rightEncoderMotor.setPower(Speed);
 
-        LFE.setPower(Speed);
+        LF.setPower(Speed);
         LB.setPower(Speed);
         RF.setPower(Speed);
         RB.setPower(Speed);
 
-        while(LFE.getCurrentPosition() < Distance){
-            //Nothing
+        while(Encoder.getCurrentPosition() < Distance){
+            //something
 
-            telemetry.addData("LFE Value",  LFE.getCurrentPosition());
+            telemetry.addData("LFE Value",  Encoder.getCurrentPosition());
             telemetry.update();
         }
 
-        LFE.setPower(0);
+        LF.setPower(0);
         LB.setPower(0);
         RF.setPower(0);
         RB.setPower(0);
