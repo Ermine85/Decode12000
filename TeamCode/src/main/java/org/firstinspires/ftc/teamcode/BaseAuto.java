@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 
 @Autonomous(name="Auto", group="Robot")
 public class BaseAuto extends LinearOpMode{
@@ -29,6 +31,12 @@ public class BaseAuto extends LinearOpMode{
     private DcMotor RB = null;
     private DcMotor LB = null;
 
+    private DcMotor Intake = null;
+    private DcMotor Transfer = null;
+    private DcMotorEx Launcher = null;
+    private Servo LaunchServo = null;
+
+
     private DcMotor Encoder = null;
 
     private DcMotor leftEncoderMotor = null;
@@ -50,21 +58,63 @@ public class BaseAuto extends LinearOpMode{
         RF.setDirection(DcMotor.Direction.REVERSE);
         RB.setDirection(DcMotor.Direction.FORWARD);
 
+        Intake = hardwareMap.get(DcMotor.class, "Intake");
+        Transfer = hardwareMap.get(DcMotor.class, "Transfer");
+        Launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
+        LaunchServo = hardwareMap.get(Servo.class, "launch_servo");
+
+        Transfer.setDirection(DcMotor.Direction.FORWARD);
+        Intake.setDirection(DcMotor.Direction.FORWARD);
+        Launcher.setDirection(DcMotor.Direction.FORWARD);
+
+        Launcher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+
+
 
         //leftEncoderMotor = hardwareMap.get(DcMotor.class, "LeftFront");
         //rightEncoderMotor = hardwareMap.get(DcMotor.class, "RightFront");
 
         waitForStart();
 
+        LaunchServo.setPosition(1);
+
+        LaunchServo.scaleRange(0.73, 0.83);
+
+        boolean LauncherMaxSpd = false;
+
+
         //Auto Script
 
-        goVroom(16000,0.25f);
+        goVroom(16000,0.5f);
+
+
+        //Shoot three balls
+        shootBalls(6000);
+
+
 
 
     }
 
-    public void goVroom(int Distance, float Speed){
+    public void shootBalls(int Time) {
+        Launcher.setVelocity(-2100);
 
+        sleep(1000);
+        LaunchServo.setPosition(0);
+
+        sleep( 1500);
+        Transfer.setPower(0.5);
+        Intake.setPower(-1);
+
+        sleep(Time);
+
+        Launcher.setVelocity(0);
+        Transfer.setPower(0);
+        Intake.setPower(0);
+    }
+
+
+    public void goVroom(int Distance, float Speed){
         Encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         Encoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
