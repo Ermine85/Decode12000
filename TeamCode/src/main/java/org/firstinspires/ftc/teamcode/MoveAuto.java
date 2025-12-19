@@ -129,7 +129,7 @@ public class MoveAuto extends LinearOpMode {
             RF.setPower(0);
             RB.setPower(0);
 
-            Launcher.setVelocity(-2100);
+            /*Launcher.setVelocity(-2100);
 
             sleep(1000);
             LaunchServo.setPosition(0);

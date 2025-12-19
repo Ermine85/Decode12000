@@ -188,7 +188,7 @@ public class OmniTest extends LinearOpMode {
                 Launcher.setVelocity(-gamepad1.right_trigger * 3800);
             }
 
-            if(gamepad1.b && LauncherMaxSpd || gamepad1.start){
+            if(gamepad1.b && LauncherMaxSpd || gamepad1.x){
                 LaunchServo.setPosition(0); //Down
             }else{
 
