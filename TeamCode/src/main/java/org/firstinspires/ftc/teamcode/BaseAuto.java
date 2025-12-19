@@ -86,7 +86,14 @@ public class BaseAuto extends LinearOpMode{
         //shoot three balls
         shootBalls(3000);
 
+        //Continue back
+        goVroom(10000,0.5f);
 
+        //Turn toward artifacts
+        turnRight(600, 0.5f);
+
+        //Drive to artifacts
+        goVroom(22000, 0.5f);
     }
     public void shootBalls(int Time){
         Launcher.setVelocity(-2100);
@@ -132,6 +139,36 @@ public class BaseAuto extends LinearOpMode{
             telemetry.addData("LFE Value",  Encoder.getCurrentPosition());
             telemetry.update();
         }
+
+        LF.setPower(0);
+        LB.setPower(0);
+        RF.setPower(0);
+        RB.setPower(0);
+    }
+    public void turnRight(int Duration, float Speed){
+
+        LF.setPower(Speed);
+        LB.setPower(Speed);
+        RF.setPower(-Speed);
+        RB.setPower(-Speed);
+
+        //Change this later to IMU stuff instead of sleep
+        sleep(Duration);
+
+        LF.setPower(0);
+        LB.setPower(0);
+        RF.setPower(0);
+        RB.setPower(0);
+    }
+
+    public void turnLeft(int Duration, float Speed){
+
+        LF.setPower(-Speed);
+        LB.setPower(-Speed);
+        RF.setPower(Speed);
+        RB.setPower(Speed);
+
+        sleep(Duration);
 
         LF.setPower(0);
         LB.setPower(0);
