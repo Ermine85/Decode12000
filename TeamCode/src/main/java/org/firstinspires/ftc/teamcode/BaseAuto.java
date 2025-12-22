@@ -5,9 +5,14 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+
 
 @Autonomous(name="Auto", group="Robot")
-public class BaseAuto extends LinearOpMode{
+public class  BaseAuto extends LinearOpMode{
 
 
     //Needed for encoders:
@@ -41,6 +46,11 @@ public class BaseAuto extends LinearOpMode{
     private DcMotor leftEncoderMotor = null;
     private DcMotor rightEncoderMotor = null;
 
+    IMU imu;
+    YawPitchRollAngles Orientation;
+
+    double slowSpeed = 0.1;
+
     @Override
     public void runOpMode(){
         //Variable initiation
@@ -70,6 +80,20 @@ public class BaseAuto extends LinearOpMode{
         //leftEncoderMotor = hardwareMap.get(DcMotor.class, "LeftFront");
         //rightEncoderMotor = hardwareMap.get(DcMotor.class, "RightFront");
 
+
+        //initialized imu :D
+        imu = hardwareMap.get(IMU.class, "imu");
+
+        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
+        RevHubOrientationOnRobot.UsbFacingDirection UsbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+        RevHubOrientationOnRobot RevOrientation = new RevHubOrientationOnRobot(logoDirection,UsbDirection);
+
+        imu.initialize(new IMU.Parameters(RevOrientation));
+        imu.resetYaw();
+        Orientation = imu.getRobotYawPitchRollAngles();
+
+
+
         waitForStart();
 
         LaunchServo.setPosition(1);
@@ -78,9 +102,11 @@ public class BaseAuto extends LinearOpMode{
 
         boolean LauncherMaxSpd = false;
 
+        turnRight(0.3, 10, Orientation);
+
 
         //Auto Script
-
+/*
         goVroom(16000,0.5f);
 
         //shoot three balls
@@ -94,6 +120,8 @@ public class BaseAuto extends LinearOpMode{
 
         //Drive to artifacts
         goVroom(22000, 0.5f);
+
+ */
     }
     public void shootBalls(int Time){
         Launcher.setVelocity(-2100);
@@ -108,6 +136,8 @@ public class BaseAuto extends LinearOpMode{
         Transfer.setPower(0);
         Intake.setPower(0);
         LaunchServo.setPosition(1);
+
+
 
     }
 
@@ -145,35 +175,86 @@ public class BaseAuto extends LinearOpMode{
         RF.setPower(0);
         RB.setPower(0);
     }
-    public void turnRight(int Duration, float Speed){
+    public void turnRight(double Speed, double targetAngle, YawPitchRollAngles orientation){
+        double yaw = orientation.getYaw();
+
+        telemetry.addData("Yaw", yaw);
+        telemetry.addData("Target", targetAngle);
+        telemetry.update();
 
         LF.setPower(Speed);
         LB.setPower(Speed);
         RF.setPower(-Speed);
         RB.setPower(-Speed);
 
-        //Change this later to IMU stuff instead of sleep
-        sleep(Duration);
-
-        LF.setPower(0);
-        LB.setPower(0);
-        RF.setPower(0);
-        RB.setPower(0);
+        while(yaw > -targetAngle){
+            orientation = imu.getRobotYawPitchRollAngles();
+            yaw = orientation.getYaw();
+            if(-targetAngle >= - 20){ // if said -targetAngle is greater then -20 then run slower
+                LF.setPower(slowSpeed);
+                LB.setPower(slowSpeed);
+                RF.setPower(-slowSpeed);
+                RB.setPower(-slowSpeed);
+            }
+            else if(yaw <=(-targetAngle * .75)){ // if yaw is less then or equal to said angle then run slow speed
+                LF.setPower(slowSpeed);
+                LB.setPower(slowSpeed);
+                RF.setPower(-slowSpeed);
+                RB.setPower(-slowSpeed);
+            }
+            telemetry.addData("Yaw", yaw);
+            telemetry.addData("Target", targetAngle);
+            telemetry.update();
+        }
+        stopPower();
+        imu.resetYaw();
     }
 
-    public void turnLeft(int Duration, float Speed){
+    public void turnLeft(double Speed, double targetAngle, YawPitchRollAngles orientation){
+
+        double yaw = orientation.getYaw();
+
+        telemetry.addData("Yaw", yaw);
+        telemetry.addData("Target", targetAngle);
+        telemetry.update();
 
         LF.setPower(-Speed);
         LB.setPower(-Speed);
         RF.setPower(Speed);
         RB.setPower(Speed);
 
-        sleep(Duration);
+        while(yaw < targetAngle){
+            orientation = imu.getRobotYawPitchRollAngles();
+            yaw = orientation.getYaw();
+            if(targetAngle <= 20){ // if target angle is less than  or equal to 20 always run slow
+                LF.setPower(-slowSpeed);
+                LB.setPower(-slowSpeed);
+                RF.setPower(slowSpeed);
+                RB.setPower(slowSpeed);
+            }
+            else if(yaw >= (targetAngle * .75)){// if yaw is greater then or equal to said angle time .75 = 75% then run slow speed
+                LF.setPower(-slowSpeed);
+                LB.setPower(-slowSpeed);
+                RF.setPower(slowSpeed);
+                RB.setPower(slowSpeed);
+            }
+            telemetry.addData("Yaw", yaw);
+            telemetry.addData("Target", targetAngle);
+            telemetry.update();
+        }
+        stopPower();
+        imu.resetYaw();
+
+    }
+
+    public void stopPower(){ // stops wheels :)
 
         LF.setPower(0);
         LB.setPower(0);
         RF.setPower(0);
         RB.setPower(0);
+
     }
+
 
 }
