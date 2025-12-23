@@ -332,8 +332,8 @@ public class CameraGimTestScript extends LinearOpMode {
 
         if(ServoAX < 0){ // If negative angle (tolerance of 0.005 both positive and negative)
             if(curDAX > 0){ //If it was originally positive angle (means it got to where it needed).
-                curDAX = ServoAX;
-                XServo.setPosition(XServo.getPosition() + curDAX); //Gets rid of margin
+                curDAX = Math.PI - (XServo.getPosition() * 2 * Math.PI) + (ServoAX * 2);
+                //XServo.setPosition(XServo.getPosition() + curDAX); //Gets rid of margin
             }
 
             if(ServoAX < curDAX){ //If the picture gets farther away from 0 and the current angle.
@@ -357,8 +357,8 @@ public class CameraGimTestScript extends LinearOpMode {
 
         if(ServoAX > 0){ // If positive angle (tolerance of 1 both positive and negative)
             if(curDAX < 0){ //If it was originally negative angle (means it got to where it needed to be).
-                curDAX = ServoAX;
-                XServo.setPosition(XServo.getPosition() + curDAX);
+                curDAX = Math.PI - (XServo.getPosition() * 2 * Math.PI) + (ServoAX * 2);
+                //XServo.setPosition(XServo.getPosition() + curDAX);
             }
 
             if(ServoAX > curDAX){ //If the picture gets farther away from 0.
@@ -405,7 +405,7 @@ public class CameraGimTestScript extends LinearOpMode {
             deltaX = distanceX - current.get(0);
             deltaY = distanceY - current.get(1);
             distance = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
-            angle = Math.PI - (ServoPos * 2 * Math.PI);
+            angle = Math.PI - (servoPos * 2 * Math.PI);
 
             deltaA = Math.atan(deltaX/deltaY);
             angle += deltaA;

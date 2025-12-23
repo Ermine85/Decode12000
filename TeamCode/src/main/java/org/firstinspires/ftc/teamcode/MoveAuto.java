@@ -96,6 +96,7 @@ public class MoveAuto extends LinearOpMode {
         RF.setDirection(DcMotor.Direction.REVERSE);
         RB.setDirection(DcMotor.Direction.FORWARD);
 
+
         Transfer.setDirection(DcMotor.Direction.FORWARD);
         Intake.setDirection(DcMotor.Direction.FORWARD);
         Launcher.setDirection(DcMotor.Direction.FORWARD);
@@ -122,7 +123,13 @@ public class MoveAuto extends LinearOpMode {
             RF.setPower(0.5);
             RB.setPower(0.5);
 
-            sleep(1500);
+            sleep(2000);
+
+            LF.setPower(0);
+            LB.setPower(0);
+            RF.setPower(0);
+            RB.setPower(0);
+            /*sleep(1500);
 
             LF.setPower(0);
             LB.setPower(0);

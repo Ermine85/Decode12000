@@ -32,9 +32,13 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import android.graphics.Color;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.BatteryChecker;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -67,11 +71,10 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@TeleOp(name="DRIVE 2: The Sequel", group="Linear OpMode")
+@TeleOp(name="SpinnyThingTele", group="Linear OpMode")
 //@Disabled
-public class OmniTest extends LinearOpMode {
+public class SpinnyThingTele extends LinearOpMode {
 
-    // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor LeftFront = null;
     private DcMotor LeftBack = null;
@@ -81,12 +84,31 @@ public class OmniTest extends LinearOpMode {
     private DcMotor Intake = null;
     private DcMotor Transfer = null;
     private DcMotorEx Launcher = null;
+    private DcMotorEx SpindexerMotor = null;
     private Servo LaunchServo = null;
 
-    private boolean Pressed = false;
 
+    ColorSensor IntakeSensor = null;
+    ColorSensor SpinnySensor1 = null;
+    ColorSensor SpinnySensor2 = null;
+    ColorSensor SpinnySensor3 = null;
+
+
+
+
+    private boolean Pressed = false;
     private boolean RunLauncer = false;
 
+    private static final int EMPTY = 0;
+    private static final int GREEN = 1;
+    private static final int PURPLE = 2;
+    private int purpleCount = 0;//should not be greater than 2
+    private int greenCount = 0;//should be greater than 1
+
+    private int[] matchMotif;
+    private static final int[] motif1 = {1,2,2};
+    private static final int[] motif2 = {2,1,2};
+    private static final int[] motif3 = {2,2,1};
 
 
     @Override
@@ -101,18 +123,13 @@ public class OmniTest extends LinearOpMode {
         Intake = hardwareMap.get(DcMotor.class, "Intake");
         Transfer = hardwareMap.get(DcMotor.class, "Transfer");
         Launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
+        SpindexerMotor = hardwareMap.get(DcMotorEx.class, "Spindexer");
         LaunchServo = hardwareMap.get(Servo.class, "launch_servo");
+        IntakeSensor = hardwareMap.get(ColorSensor.class, "intakeSensor");
+        SpinnySensor1 = hardwareMap.get(ColorSensor.class, "spinnySensor1");
+        SpinnySensor2 = hardwareMap.get(ColorSensor.class, "spinnySensor2");
+        SpinnySensor3 = hardwareMap.get(ColorSensor.class, "spinnySensor3");
 
-        // ########################################################################################
-        // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
-        // ########################################################################################
-        // Most robots need the motors on one side to be reversed to drive forward.
-        // The motor reversals shown here are for a "direct drive" robot (the wheels turn the same direction as the motor shaft)
-        // If your robot has additional gear reductions or uses a right-angled drive, it's important to ensure
-        // that your motors are turning in the correct direction.  So, start out with the reversals here, BUT
-        // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
-        // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
-        // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
         LeftFront.setDirection(DcMotor.Direction.FORWARD);
         LeftBack.setDirection(DcMotor.Direction.REVERSE);
         RightFront.setDirection(DcMotor.Direction.FORWARD);
@@ -128,7 +145,7 @@ public class OmniTest extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        waitForStart();
+        waitForStart();//
 
         runtime.reset();
         LaunchServo.setPosition(1);
@@ -195,32 +212,9 @@ public class OmniTest extends LinearOpMode {
                 LaunchServo.setPosition(1); // Up
             }
 
-            /*
-            if(gamepad1.start){
-                LaunchServo.setPosition(0);
-            }else{
-                LaunchServo.setPosition(1);
-            }
-            */
-
 
             telemetry.addData("Servo Pos", LaunchServo.getPosition());
-            // This is test code:
-            //
-            // Uncomment the following code to test your motor directions.
-            // Each button should make the corresponding motor run FORWARD.
-            //   1) First get all the motors to take to correct positions on the robot
-            //      by adjusting your Robot Configuration if necessary.
-            //   2) Then make sure they run in the correct direction by modifying the
-            //      the setDirection() calls above.
-            // Once the correct motors move in the correct direction re-comment this code.
 
-            /*
-            frontLeftPower  = gamepad1.x ? 1.0 : 0.0;  // X gamepad
-            backLeftPower   = gamepad1.a ? 1.0 : 0.0;  // A gamepad
-            frontRightPower = gamepad1.y ? 1.0 : 0.0;  // Y gamepad
-            backRightPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
-            */
 
             // Send calculated power to wheels
             if(!gamepad1.dpad_down){
@@ -247,5 +241,47 @@ public class OmniTest extends LinearOpMode {
             telemetry.addData("Motor Speed", "%.2f", LauncherVeloc);
             telemetry.addData("Is Launcher at full speed?", LauncherMaxSpd);
             telemetry.update();
+
+
+
         }
-    }}
+    }
+    ///ColorSensingStuff
+    public int sensorDetectColor(ColorSensor sensor) {
+
+        //rgb values for the color of the balls
+        double[] empty = {64, 80, 99};
+        double[] green = {126, 582, 240};
+        double[] purple = {724, 158, 340};
+
+        double deltaE = Math.sqrt((Math.pow(empty[0] - sensor.red(),2) + (Math.pow(empty[1] - sensor.blue(),2)) + (Math.pow(empty[2] - sensor.green(), 2))));
+        double deltaR = Math.sqrt((Math.pow(green[0] - sensor.red(),2) + (Math.pow(green[1] - sensor.blue(),2)) + (Math.pow(green[2] - sensor.green(),2))));
+        double deltaB = Math.sqrt((Math.pow(purple[0] - sensor.red(),2) + (Math.pow(purple[1] - sensor.blue(),2) + (Math.pow(purple[2] - sensor.green(),2)))));
+
+        double emptyConfidence = 1 - (deltaE/3)*((1 / (deltaE + deltaR)) + (1/((deltaE + deltaB))));
+        double greenConfidence = 1 - (deltaR/3)*((1 / (deltaR + deltaE)) + (1/((deltaR + deltaB))));
+        double purpleConfidence = 1 - (deltaB/3)*((1 / (deltaB + deltaE)) + (1/((deltaB + deltaE))));
+        double[] confidenceValues = {emptyConfidence,greenConfidence,purpleConfidence};
+        int color  = findLargest(confidenceValues);
+
+        return color;
+    }
+
+    public int findLargest(double[] array){
+        double largest = array[0];
+        int color = 0;
+
+        for(int i = 1; i < array.length; i++){
+            if(array[i] > largest){
+                largest = array[i];//update our largest value
+                color = i;//update the color we're most confident in
+            }
+            //if not then we don't care
+        }
+        return color;
+    }
+
+    ///SpinnyThingClasses
+
+
+}

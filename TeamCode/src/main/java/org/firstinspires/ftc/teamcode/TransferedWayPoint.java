@@ -182,6 +182,7 @@ public class TransferedWayPoint extends LinearOpMode {
         RightArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
 
+
         LeftFrontALE.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         LeftBackABE.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         RightBackARE.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
