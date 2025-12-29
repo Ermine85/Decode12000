@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -38,6 +40,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.BatteryChecker;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 /*
  * This file contains an example of a Linear "OpMode".
@@ -71,6 +75,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 //@Disabled
 public class OmniTest extends LinearOpMode {
 
+    // Declare Opmode member for the Limelight 3A camera
+    private Limelight3A limelight;
+
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor LeftFront = null;
@@ -82,6 +89,7 @@ public class OmniTest extends LinearOpMode {
     private DcMotor Transfer = null;
     private DcMotorEx Launcher = null;
     private Servo LaunchServo = null;
+    private Servo ColorIndicator;
 
     private boolean Pressed = false;
 
@@ -91,6 +99,15 @@ public class OmniTest extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+        // Initialize the Limelight 3A
+        limelight = hardwareMap.get(Limelight3A.class, "limelight3A");
+
+        telemetry.setMsTransmissionInterval(11);
+
+        limelight.pipelineSwitch(0);
+
+        /* Starts polling for data */
+        limelight.start();
 
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
@@ -102,6 +119,7 @@ public class OmniTest extends LinearOpMode {
         Transfer = hardwareMap.get(DcMotor.class, "Transfer");
         Launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
         LaunchServo = hardwareMap.get(Servo.class, "launch_servo");
+        ColorIndicator = hardwareMap.get(Servo.class, "color_indicator");
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -137,6 +155,24 @@ public class OmniTest extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+            // Limelight April Tag code first
+            LLResult result = limelight.getLatestResult();
+            if (result != null) {
+                if (result.isValid()) {
+                    Pose3D botpose = result.getBotpose();
+                  //  telemetry.addData("tx", result.getTx());
+                  //  telemetry.addData("ty", result.getTy());
+                  //  telemetry.addData("ta", result.getTa());
+                    telemetry.addData("Botpose", botpose.toString());
+
+                    if (botpose != null) {
+                        double x = botpose.getPosition().x;
+                        double y = botpose.getPosition().y;
+                        telemetry.addData("MT1 Location", "(" + x + ", " + y + ")");
+                    }
+                }
+            }
+
             double max;
 
             double LauncherVeloc = Launcher.getVelocity();
@@ -236,7 +272,9 @@ public class OmniTest extends LinearOpMode {
                 RightBack.setPower(backRightPower / 3);
             }
 
+            ColorIndicator.scaleRange(0.277, 0.5); //(0.277 is red 0.5 is green so it makes the 0-1 red-green)
 
+            ColorIndicator.setPosition(Math.abs(LauncherVeloc/2200)); //if no velocity it will be red, the more velocity closer to max (2200) will make it closer to green
             //Tolerance Value.
             LauncherMaxSpd = LauncherVeloc < -2100;
 
