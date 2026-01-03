@@ -7,6 +7,11 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.LLStatus;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+
 @Autonomous(name="Auto", group="Robot")
 public class BaseAuto extends LinearOpMode{
 
@@ -28,6 +33,7 @@ public class BaseAuto extends LinearOpMode{
      */
     //Variable creation
 
+    //LimeLight3A limelight;
     private DcMotor RF = null;
     private DcMotor LF = null;
     private DcMotor RB = null;
@@ -41,7 +47,7 @@ public class BaseAuto extends LinearOpMode{
     @Override
     public void runOpMode(){
         //Variable initiation
-
+        //limelight = hardwareMap.get(LimeLight3A.class, "limelight");
         LF = hardwareMap.get(DcMotor.class, "LeftFront");
         LB = hardwareMap.get(DcMotor.class, "LeftBack");
         RF = hardwareMap.get(DcMotor.class, "RightFront");
@@ -64,6 +70,7 @@ public class BaseAuto extends LinearOpMode{
 
         goVroom(16000,0.25f);
 
+        //LLResult result = limelight.getLatestResult();
 
     }
 

@@ -123,6 +123,7 @@ public class SensorLimelight3A extends LinearOpMode {
                     telemetry.addData("Barcode", "Data: %s", br.getData());
                 }
 
+
                 // Access classifier results
                 List<LLResultTypes.ClassifierResult> classifierResults = result.getClassifierResults();
                 for (LLResultTypes.ClassifierResult cr : classifierResults) {

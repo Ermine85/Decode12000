@@ -37,11 +37,14 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.BatteryChecker;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 /*
  * This file contains an example of a Linear "OpMode".
@@ -120,6 +123,7 @@ public class OmniTest extends LinearOpMode {
         Launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
         LaunchServo = hardwareMap.get(Servo.class, "launch_servo");
         ColorIndicator = hardwareMap.get(Servo.class, "color_indicator");
+        IMU imu = hardwareMap.get(IMU.class, "imu");
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -156,19 +160,23 @@ public class OmniTest extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             // Limelight April Tag code first
+            YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+            limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
             LLResult result = limelight.getLatestResult();
             if (result != null) {
                 if (result.isValid()) {
                     Pose3D botpose = result.getBotpose();
-                  //  telemetry.addData("tx", result.getTx());
-                  //  telemetry.addData("ty", result.getTy());
-                  //  telemetry.addData("ta", result.getTa());
+                    telemetry.addData("tx", result.getTx());
+                    telemetry.addData("ty", result.getTy());
+                    telemetry.addData("ta", result.getTa());
                     telemetry.addData("Botpose", botpose.toString());
 
                     if (botpose != null) {
                         double x = botpose.getPosition().x;
+
                         double y = botpose.getPosition().y;
-                        telemetry.addData("MT1 Location", "(" + x + ", " + y + ")");
+
+                        telemetry.addData("MT1 Location", "(" + truncate(x, 3) + ", " + truncate(y, 3) + ")");
                     }
                 }
             }
@@ -286,4 +294,10 @@ public class OmniTest extends LinearOpMode {
             telemetry.addData("Is Launcher at full speed?", LauncherMaxSpd);
             telemetry.update();
         }
-    }}
+
+    }
+    public static double truncate(double value, int places) {
+        double factor = Math.pow(10, places);
+        return Math.floor(value * factor) / factor;
+    }
+}

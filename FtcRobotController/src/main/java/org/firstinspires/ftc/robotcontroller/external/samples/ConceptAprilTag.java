@@ -39,6 +39,8 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+
 import java.util.List;
 
 /*
