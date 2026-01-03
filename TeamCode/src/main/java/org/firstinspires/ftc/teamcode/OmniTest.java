@@ -169,14 +169,15 @@ public class OmniTest extends LinearOpMode {
                     telemetry.addData("tx", result.getTx());
                     telemetry.addData("ty", result.getTy());
                     telemetry.addData("ta", result.getTa());
-                    telemetry.addData("Botpose", botpose.toString());
+                    telemetry.addData("Distance", GetDistance(result.getTa()));
+                    //telemetry.addData("Botpose", botpose.toString());
 
                     if (botpose != null) {
                         double x = botpose.getPosition().x;
 
                         double y = botpose.getPosition().y;
 
-                        telemetry.addData("MT1 Location", "(" + truncate(x, 3) + ", " + truncate(y, 3) + ")");
+                        //telemetry.addData("MT1 Location", "(" + truncate(x, 3) + ", " + truncate(y, 3) + ")");
                     }
                 }
             }
@@ -288,10 +289,10 @@ public class OmniTest extends LinearOpMode {
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
-            telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
-            telemetry.addData("Motor Speed", "%.2f", LauncherVeloc);
-            telemetry.addData("Is Launcher at full speed?", LauncherMaxSpd);
+            //telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
+            //telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
+            //telemetry.addData("Motor Speed", "%.2f", LauncherVeloc);
+            //telemetry.addData("Is Launcher at full speed?", LauncherMaxSpd);
             telemetry.update();
         }
 
@@ -299,5 +300,9 @@ public class OmniTest extends LinearOpMode {
     public static double truncate(double value, int places) {
         double factor = Math.pow(10, places);
         return Math.floor(value * factor) / factor;
+    }
+
+    double GetDistance(double TArea){
+        return (360.447 - (234.2437*TArea) + (50.93374 * Math.pow(TArea, 2)));
     }
 }
