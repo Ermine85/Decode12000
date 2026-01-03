@@ -1,19 +1,18 @@
 package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
-import com.qualcomm.hardware.limelightvision.LLStatus;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
 
 @Autonomous(name="Auto", group="Robot")
-public class BaseAuto extends LinearOpMode{
+public class  BaseAuto extends LinearOpMode{
 
 
     //Needed for encoders:
@@ -33,21 +32,33 @@ public class BaseAuto extends LinearOpMode{
      */
     //Variable creation
 
-    //LimeLight3A limelight;
     private DcMotor RF = null;
     private DcMotor LF = null;
     private DcMotor RB = null;
     private DcMotor LB = null;
 
+    private DcMotor Intake = null;
+    private DcMotor Transfer = null;
+    private DcMotorEx Launcher = null;
+    private Servo LaunchServo = null;
     private DcMotor Encoder = null;
 
     private DcMotor leftEncoderMotor = null;
     private DcMotor rightEncoderMotor = null;
 
+    private Servo rgbLight = null;
+
+    IMU imu;
+    YawPitchRollAngles Orientation;
+
+    double slowSpeed = 0.1;
+
+    Boolean isBlue = true;
+
     @Override
     public void runOpMode(){
         //Variable initiation
-        //limelight = hardwareMap.get(LimeLight3A.class, "limelight");
+
         LF = hardwareMap.get(DcMotor.class, "LeftFront");
         LB = hardwareMap.get(DcMotor.class, "LeftBack");
         RF = hardwareMap.get(DcMotor.class, "RightFront");
@@ -55,22 +66,86 @@ public class BaseAuto extends LinearOpMode{
 
         Encoder = hardwareMap.get(DcMotor.class, "Encoder");
 
+        rgbLight = hardwareMap.get(Servo.class, "rgbLight");
+
         LF.setDirection(DcMotor.Direction.FORWARD);
         LB.setDirection(DcMotor.Direction.REVERSE);
         RF.setDirection(DcMotor.Direction.REVERSE);
         RB.setDirection(DcMotor.Direction.FORWARD);
 
+        Intake = hardwareMap.get(DcMotor.class, "Intake");
+        Transfer = hardwareMap.get(DcMotor.class, "Transfer");
+        Launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
+        LaunchServo = hardwareMap.get(Servo.class, "launch_servo");
 
+        Transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+        Intake.setDirection(DcMotorSimple.Direction.FORWARD);
+        Launcher.setDirection(DcMotorSimple.Direction.FORWARD);
+
+        Launcher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         //leftEncoderMotor = hardwareMap.get(DcMotor.class, "LeftFront");
         //rightEncoderMotor = hardwareMap.get(DcMotor.class, "RightFront");
 
+
+        //initialized imu :D
+        imu = hardwareMap.get(IMU.class, "imu");
+
+        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
+        RevHubOrientationOnRobot.UsbFacingDirection UsbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+        RevHubOrientationOnRobot RevOrientation = new RevHubOrientationOnRobot(logoDirection,UsbDirection);
+
+        imu.initialize(new IMU.Parameters(RevOrientation));
+        imu.resetYaw();
+        Orientation = imu.getRobotYawPitchRollAngles();
+
+        //   if (isBlue)
+            rgbLight.setPosition(1.0);
+        sleep(100000);
+
         waitForStart();
 
+        LaunchServo.setPosition(1);
+
+        LaunchServo.scaleRange(0.73, 0.83);
+
+        boolean LauncherMaxSpd = false;
+
+       // turnRight(0.3, 10, Orientation);
+
+
         //Auto Script
+/*
+        goVroom(16000,0.5f);
 
-        goVroom(16000,0.25f);
+        //shoot three balls
+        shootBalls(3000);
 
-        //LLResult result = limelight.getLatestResult();
+        //Continue back
+        goVroom(10000,0.5f);
+
+        //Turn toward artifacts
+        turnRight(600, 0.5f);
+
+        //Drive to artifacts
+        goVroom(22000, 0.5f);
+
+ */
+    }
+    public void shootBalls(int Time){
+        Launcher.setVelocity(-2100);
+
+        sleep(1000);
+        LaunchServo.setPosition(0);
+        Transfer.setPower(0.5);
+        Intake.setPower(-1);
+
+        sleep(Time);
+        Launcher.setVelocity(0);
+        Transfer.setPower(0);
+        Intake.setPower(0);
+        LaunchServo.setPosition(1);
+
+
 
     }
 
@@ -108,4 +183,86 @@ public class BaseAuto extends LinearOpMode{
         RF.setPower(0);
         RB.setPower(0);
     }
+    public void turnRight(double Speed, double targetAngle, YawPitchRollAngles orientation){
+        double yaw = orientation.getYaw();
+
+        telemetry.addData("Yaw", yaw);
+        telemetry.addData("Target", targetAngle);
+        telemetry.update();
+
+        LF.setPower(Speed);
+        LB.setPower(Speed);
+        RF.setPower(-Speed);
+        RB.setPower(-Speed);
+
+        while(yaw > -targetAngle){
+            orientation = imu.getRobotYawPitchRollAngles();
+            yaw = orientation.getYaw();
+            if(-targetAngle >= - 20){ // if said -targetAngle is greater then -20 then run slower
+                LF.setPower(slowSpeed);
+                LB.setPower(slowSpeed);
+                RF.setPower(-slowSpeed);
+                RB.setPower(-slowSpeed);
+            }
+            else if(yaw <=(-targetAngle * .75)){ // if yaw is less then or equal to said angle then run slow speed
+                LF.setPower(slowSpeed);
+                LB.setPower(slowSpeed);
+                RF.setPower(-slowSpeed);
+                RB.setPower(-slowSpeed);
+            }
+            telemetry.addData("Yaw", yaw);
+            telemetry.addData("Target", targetAngle);
+            telemetry.update();
+        }
+        stopPower();
+        imu.resetYaw();
+    }
+
+    public void turnLeft(double Speed, double targetAngle, YawPitchRollAngles orientation){
+
+        double yaw = orientation.getYaw();
+
+        telemetry.addData("Yaw", yaw);
+        telemetry.addData("Target", targetAngle);
+        telemetry.update();
+
+        LF.setPower(-Speed);
+        LB.setPower(-Speed);
+        RF.setPower(Speed);
+        RB.setPower(Speed);
+
+        while(yaw < targetAngle){
+            orientation = imu.getRobotYawPitchRollAngles();
+            yaw = orientation.getYaw();
+            if(targetAngle <= 20){ // if target angle is less than  or equal to 20 always run slow
+                LF.setPower(-slowSpeed);
+                LB.setPower(-slowSpeed);
+                RF.setPower(slowSpeed);
+                RB.setPower(slowSpeed);
+            }
+            else if(yaw >= (targetAngle * .75)){// if yaw is greater then or equal to said angle time .75 = 75% then run slow speed
+                LF.setPower(-slowSpeed);
+                LB.setPower(-slowSpeed);
+                RF.setPower(slowSpeed);
+                RB.setPower(slowSpeed);
+            }
+            telemetry.addData("Yaw", yaw);
+            telemetry.addData("Target", targetAngle);
+            telemetry.update();
+        }
+        stopPower();
+        imu.resetYaw();
+
+    }
+
+    public void stopPower(){ // stops wheels :)
+
+        LF.setPower(0);
+        LB.setPower(0);
+        RF.setPower(0);
+        RB.setPower(0);
+
+    }
+
+
 }
