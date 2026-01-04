@@ -1,4 +1,7 @@
 package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -9,6 +12,10 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+
 
 
 @Autonomous(name="Auto", group="Robot")
@@ -49,11 +56,23 @@ public class  BaseAuto extends LinearOpMode{
     IMU imu;
     YawPitchRollAngles Orientation;
 
+    private Limelight3A limelight;
+
     double slowSpeed = 0.15;
 
     @Override
-    public void runOpMode(){
+    public void runOpMode() {
+
         //Variable initiation
+
+        limelight = hardwareMap.get(Limelight3A.class, "limelight3A");
+
+        telemetry.setMsTransmissionInterval(11);
+
+        limelight.pipelineSwitch(0);
+
+        /* Starts polling for data */
+        limelight.start();
 
         LF = hardwareMap.get(DcMotor.class, "LeftFront");
         LB = hardwareMap.get(DcMotor.class, "LeftBack");
@@ -86,12 +105,11 @@ public class  BaseAuto extends LinearOpMode{
 
         RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
         RevHubOrientationOnRobot.UsbFacingDirection UsbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
-        RevHubOrientationOnRobot RevOrientation = new RevHubOrientationOnRobot(logoDirection,UsbDirection);
+        RevHubOrientationOnRobot RevOrientation = new RevHubOrientationOnRobot(logoDirection, UsbDirection);
 
         imu.initialize(new IMU.Parameters(RevOrientation));
         imu.resetYaw();
         Orientation = imu.getRobotYawPitchRollAngles();
-
 
 
         waitForStart();
@@ -101,6 +119,8 @@ public class  BaseAuto extends LinearOpMode{
         LaunchServo.scaleRange(0.73, 0.83);
 
         boolean LauncherMaxSpd = false;
+
+        goVroom(16000,.5f);
 
         turnRight(0.3, 10, Orientation);
 
@@ -179,7 +199,9 @@ public class  BaseAuto extends LinearOpMode{
             //something
 
             telemetry.addData("LFE Value",  Encoder.getCurrentPosition());
+            limeLightTelemetry();
             telemetry.update();
+
         }
 
         LF.setPower(0);
@@ -216,6 +238,7 @@ public class  BaseAuto extends LinearOpMode{
             }
             telemetry.addData("Yaw", yaw);
             telemetry.addData("Target", targetAngle);
+            limeLightTelemetry();
             telemetry.update();
         }
         stopPower();
@@ -250,9 +273,12 @@ public class  BaseAuto extends LinearOpMode{
                 RF.setPower(slowSpeed);
                 RB.setPower(slowSpeed);
             }
+
             telemetry.addData("Yaw", yaw);
             telemetry.addData("Target", targetAngle);
+            limeLightTelemetry();
             telemetry.update();
+
         }
         stopPower();
         imu.resetYaw();
@@ -266,6 +292,35 @@ public class  BaseAuto extends LinearOpMode{
         RF.setPower(0);
         RB.setPower(0);
 
+    }
+
+    public void limeLightTelemetry(){
+        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+        LLResult result = limelight.getLatestResult();
+        if (result != null) {
+            if (result.isValid()) {
+                Pose3D botpose = result.getBotpose();
+                telemetry.addData("tx", result.getTx());
+                telemetry.addData("ty", result.getTy());
+                telemetry.addData("ta", result.getTa());
+                telemetry.addData("Distance", GetDistance(result.getTa()));
+                //telemetry.addData("Botpose", botpose.toString());
+
+                if (botpose != null) {
+                    double x = botpose.getPosition().x;
+
+                    double y = botpose.getPosition().y;
+
+                    //telemetry.addData("MT1 Location", "(" + truncate(x, 3) + ", " + truncate(y, 3) + ")");
+                }
+            }
+        }
+
+    }
+
+    double GetDistance(double TArea){
+        return (360.447 - (234.2437*TArea) + (50.93374 * Math.pow(TArea, 2)));
     }
 
 
