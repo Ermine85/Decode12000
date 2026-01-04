@@ -46,14 +46,10 @@ public class  BaseAuto extends LinearOpMode{
     private DcMotor leftEncoderMotor = null;
     private DcMotor rightEncoderMotor = null;
 
-    private Servo rgbLight = null;
-
     IMU imu;
     YawPitchRollAngles Orientation;
 
-    double slowSpeed = 0.1;
-
-    Boolean isBlue = true;
+    double slowSpeed = 0.15;
 
     @Override
     public void runOpMode(){
@@ -65,8 +61,6 @@ public class  BaseAuto extends LinearOpMode{
         RB = hardwareMap.get(DcMotor.class, "RightBack");
 
         Encoder = hardwareMap.get(DcMotor.class, "Encoder");
-
-        rgbLight = hardwareMap.get(Servo.class, "rgbLight");
 
         LF.setDirection(DcMotor.Direction.FORWARD);
         LB.setDirection(DcMotor.Direction.REVERSE);
@@ -98,9 +92,7 @@ public class  BaseAuto extends LinearOpMode{
         imu.resetYaw();
         Orientation = imu.getRobotYawPitchRollAngles();
 
-        //   if (isBlue)
-            rgbLight.setPosition(1.0);
-        sleep(100000);
+
 
         waitForStart();
 
@@ -110,7 +102,19 @@ public class  BaseAuto extends LinearOpMode{
 
         boolean LauncherMaxSpd = false;
 
-       // turnRight(0.3, 10, Orientation);
+        turnRight(0.3, 10, Orientation);
+
+        sleep(1000);
+
+        turnLeft(0.3, 10, Orientation);
+
+        sleep(1000);
+
+        turnRight(0.3, 90, Orientation);
+
+        sleep(1000);
+
+        turnLeft(0.3, 90, Orientation);
 
 
         //Auto Script
