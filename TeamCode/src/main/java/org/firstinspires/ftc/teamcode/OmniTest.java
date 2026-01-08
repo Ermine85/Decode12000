@@ -296,14 +296,14 @@ public class OmniTest extends LinearOpMode {
 
             ColorIndicator.setPosition(Math.abs(LauncherVeloc/2200)); //if no velocity it will be red, the more velocity closer to max (2200) will make it closer to green
             //Tolerance Value.
-            LauncherMaxSpd = LauncherVeloc < -2100;
+            LauncherMaxSpd = LauncherVeloc < -1800;
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             //telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
             //telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
-            //telemetry.addData("Motor Speed", "%.2f", LauncherVeloc);
-            //telemetry.addData("Is Launcher at full speed?", LauncherMaxSpd);
+            telemetry.addData("Motor Speed", "%.2f", LauncherVeloc);
+            telemetry.addData("Is Launcher at full speed?", LauncherMaxSpd);
             telemetry.update();
         }
 
@@ -314,7 +314,7 @@ public class OmniTest extends LinearOpMode {
     }
 
     double GetDistance(double TArea){
-        return (360.447 - (234.2437*TArea) + (50.93374 * Math.pow(TArea, 2)));
+        return (120.9809 + (331.8667 * Math.pow(Math.E, (-2.119361 * TArea))));
     }
 
 

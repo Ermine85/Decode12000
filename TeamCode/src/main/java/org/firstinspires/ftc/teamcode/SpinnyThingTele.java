@@ -119,7 +119,7 @@ public class SpinnyThingTele extends LinearOpMode {
         Launcher.setDirection(DcMotor.Direction.FORWARD);
 
         Launcher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        SpindexerMotor(DcMotorEx.RunMode.RUN_TO_POSITION);
+        //SpindexerMotor(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
@@ -307,7 +307,7 @@ public class SpinnyThingTele extends LinearOpMode {
 
     //not done yet
     public void matchGenevaWithMotif(){
-        for(i = 0; i < matchMotif.length; i++){
+        for(int i = 0; i < matchMotif.length; i++){
             if(genevaMatchesMotif()){
                 rotateSpindexer(i * 2);
             }
@@ -322,7 +322,7 @@ public class SpinnyThingTele extends LinearOpMode {
     //only used when we have 2 greens and one purple
     public void matchPurpleArtifact(){
         //iterate through the geneva and the motif arrays to see if the purple is in the correct spot
-        for(i = 0; i < matchMotif.length; i++){
+        for(int i = 0; i < matchMotif.length; i++){
             if(genevaArray[i * 2] == PURPLE){
                 if(matchMotif[i] == PURPLE){
                     //purple is already in correct spot so we dont need to move
@@ -336,7 +336,7 @@ public class SpinnyThingTele extends LinearOpMode {
 
     //compares each value in the array making sure they're equal
     public boolean genevaMatchesMotif(){
-        for(i = 0; i < matchMotif.length; i++){
+        for(int i = 0; i < matchMotif.length; i++){
             if(genevaArray[i*2] == matchMotif[i]){
                 //do nothing because we want them to be the same
             }else{
