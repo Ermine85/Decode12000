@@ -43,33 +43,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.BatteryChecker;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-/*
- * This file contains an example of a Linear "OpMode".
- * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
- * The names of OpModes appear on the menu of the FTC Driver Station.
- * When a selection is made from the menu, the corresponding OpMode is executed.
- *
- * This particular OpMode illustrates driving a 4-motor Omni-Directional (or Holonomic) robot.
- * This code will work with either a Mecanum-Drive or an X-Drive train.
- * Both of these drives are illustrated at https://gm0.org/en/latest/docs/robot-design/drivetrains/holonomic.html
- * Note that a Mecanum drive must display an X roller-pattern when viewed from above.
- *
- * Also note that it is critical to set the correct rotation direction for each motor.  See details below.
- *
- * Holonomic drives provide the ability for the robot to move in three axes (directions) simultaneously.
- * Each motion axis is controlled by one Joystick axis.
- *
- * 1) Axial:    Driving forward and backward               Left-joystick Forward/Backward
- * 2) Lateral:  Strafing right and left                     Left-joystick Right and Left
- * 3) Yaw:      Rotating Clockwise and counter clockwise    Right-joystick Right and Left
- *
- * This code is written assuming that the right-side motors need to be reversed for the robot to drive forward.
- * When you first test your robot, if it moves backward when you push the left stick forward, then you must flip
- * the direction of all 4 motors (see code below).
- *
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
- */
+
 
 @TeleOp(name="SpinnyThingTele", group="Linear OpMode")
 //@Disabled
@@ -98,14 +72,19 @@ public class SpinnyThingTele extends LinearOpMode {
 
     private boolean Pressed = false;
     private boolean RunLauncer = false;
+    private boolean intakeMode = false;
 
     private static final int EMPTY = 0;
     private static final int GREEN = 1;
     private static final int PURPLE = 2;
-    private int purpleCount = 0;//should not be greater than 2
-    private int greenCount = 0;//should be greater than 1
+    private static final int SHOOTINGINDEX = 5;//same as going backwards once
+    private int purpleCount = 0;//hopefully 2
+    private int greenCount = 0;//hopefully 1
+    private int genevaRotationCount = 0;
 
-    private int[] matchMotif;
+
+    private int[] genevaArray = {0,0,0,0,0,0};
+    private int[] matchMotif;//this needs to be set to based on what the aprilTag reads
     private static final int[] motif1 = {1,2,2};
     private static final int[] motif2 = {2,1,2};
     private static final int[] motif3 = {2,2,1};
@@ -140,6 +119,7 @@ public class SpinnyThingTele extends LinearOpMode {
         Launcher.setDirection(DcMotor.Direction.FORWARD);
 
         Launcher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        SpindexerMotor(DcMotorEx.RunMode.RUN_TO_POSITION);
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
@@ -184,7 +164,7 @@ public class SpinnyThingTele extends LinearOpMode {
             }
             LaunchServo.scaleRange(0.73, 0.83);
 
-            Intake.setPower(-gamepad1.left_trigger);
+            //Intake.setPower(-gamepad1.left_trigger);
 
             Transfer.setPower(gamepad1.left_trigger/1.75);
 
@@ -230,10 +210,61 @@ public class SpinnyThingTele extends LinearOpMode {
                 RightBack.setPower(backRightPower / 3);
             }
 
-
             //Tolerance Value.
             LauncherMaxSpd = LauncherVeloc < -2100;
 
+            ///
+            ///
+            ///Code for the spindexer and keeping track of balls
+            ///
+            ///
+            if(gamepad1.a){
+                intakeMode = true;
+            }
+            //need to set the match motif to one of the premade motifs
+            //make a thread to run this loop on(so they can still move if they have to)
+
+            while(intakeMode){
+                //Intake.setPower(-1);//no more intake
+                if(sensorDetectColor(IntakeSensor) != EMPTY){
+                    int artifactColor = sensorDetectColor(IntakeSensor);
+                    genevaArray[genevaRotationCount] = artifactColor;
+
+                    if(artifactColor == PURPLE){
+                        purpleCount++;
+                    }else{//the artifact must be green if its not purple
+                        greenCount++;
+                    }
+
+                }
+                rotateSpindexer(2);
+
+                if(has3Elements()){
+                    //match our elements with motif
+                    spindexerMotifMatch();
+                    intakeMode = false;
+                }
+
+               if(gamepad1.a){intakeMode = false;}
+            }
+
+            //should move to the correct shooting order
+            //shoot the artifacts
+            //reset our array and the counts
+
+            //when you press y it shoots all 3 of the artifacts and then resets the variables/arrays
+            if(gamepad1.y){
+                rotateSpindexer(1); //put the first artifact in the launch position
+                Launcher.setVelocity(-3800);//spin the launcher wheel
+
+                for(int i = 0; i < 3; i++){
+                    LaunchServo.setPosition(0); //Down (not sure which is up/down)
+                    rotateSpindexer(2);
+                    LaunchServo.setPosition(1);
+                }
+                resetAfterShooting();
+            }
+            //comment so we can push
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
@@ -244,6 +275,93 @@ public class SpinnyThingTele extends LinearOpMode {
 
 
 
+        }
+    }
+    ///SpinnyThingClasses
+    public void rotateSpindexer(int rotationCount){
+        SpindexerMotor.setTargetPosition(rotationCount * 1000); //1000 should be updated to ticks per rotation
+        genevaRotationCount = (genevaRotationCount + rotationCount) % 6; //updates genevaRotation and resets if over 6
+
+    }
+    public boolean has3Elements(){
+        int count = 0;
+        for(int i = 0; i < genevaArray.length; i++){
+            if (genevaArray[i] != EMPTY){
+                count++;
+            }
+        }
+        return count == 3;
+    }
+    public void spindexerMotifMatch(){
+        if(purpleCount == 3 || greenCount == 3){
+            return;//we are done, nothing to do since we cant better the amount of matches
+        }
+        else if(greenCount == 2 ){
+            matchPurpleArtifact();//rotate spindexer is called in this fxn
+        }
+        else{
+            //we have 2 purples and a green
+            matchGenevaWithMotif();//rotate spindexer is called in this fxn
+        }
+    }
+
+    //not done yet
+    public void matchGenevaWithMotif(){
+        for(i = 0; i < matchMotif.length; i++){
+            if(genevaMatchesMotif()){
+                rotateSpindexer(i * 2);
+            }
+            else{
+                //move the geneva array over one and check again
+                moveGenevaArray();
+            }
+        }
+
+
+    }
+    //only used when we have 2 greens and one purple
+    public void matchPurpleArtifact(){
+        //iterate through the geneva and the motif arrays to see if the purple is in the correct spot
+        for(i = 0; i < matchMotif.length; i++){
+            if(genevaArray[i * 2] == PURPLE){
+                if(matchMotif[i] == PURPLE){
+                    //purple is already in correct spot so we dont need to move
+                }
+                else{
+                    rotateSpindexer(2); //moves the purple artifact to a correct motif position
+                }
+            }
+        }
+    }
+
+    //compares each value in the array making sure they're equal
+    public boolean genevaMatchesMotif(){
+        for(i = 0; i < matchMotif.length; i++){
+            if(genevaArray[i*2] == matchMotif[i]){
+                //do nothing because we want them to be the same
+            }else{
+                return false;
+            }
+        }
+        return true;
+    }
+    //changes the values of the geneva array over 2 spots each, looping back at 4
+    public void moveGenevaArray(){
+        //move the indexes with the artifacts over 2 geneva turns
+        int temp = genevaArray[0];
+
+        genevaArray[0] = genevaArray[4];
+        genevaArray[4] = genevaArray[2];
+        genevaArray[2] = temp;
+
+    }
+    public void resetAfterShooting(){
+        greenCount = 0;
+        purpleCount = 0;
+        genevaRotationCount = 0;
+
+        for(int i = 0; i < genevaArray.length; i++){
+            genevaArray[i] = 0;
         }
     }
     ///ColorSensingStuff
@@ -281,7 +399,6 @@ public class SpinnyThingTele extends LinearOpMode {
         return color;
     }
 
-    ///SpinnyThingClasses
 
 
 }
