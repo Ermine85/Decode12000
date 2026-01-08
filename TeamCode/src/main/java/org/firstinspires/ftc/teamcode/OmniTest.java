@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -45,6 +46,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+
+import java.util.List;
 
 /*
  * This file contains an example of a Linear "OpMode".
@@ -172,6 +175,13 @@ public class OmniTest extends LinearOpMode {
                     telemetry.addData("Distance", GetDistance(result.getTa()));
                     //telemetry.addData("Botpose", botpose.toString());
 
+                    List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
+                    for (LLResultTypes.FiducialResult fiducial : fiducials) {
+                        int id = fiducial.getFiducialId(); // The ID number of the fiducial
+
+                        telemetry.addData("Fiducial " + id, " " );
+                    }
+
                     if (botpose != null) {
                         double x = botpose.getPosition().x;
 
@@ -181,6 +191,7 @@ public class OmniTest extends LinearOpMode {
                     }
                 }
             }
+
 
             double max;
 
@@ -305,4 +316,8 @@ public class OmniTest extends LinearOpMode {
     double GetDistance(double TArea){
         return (360.447 - (234.2437*TArea) + (50.93374 * Math.pow(TArea, 2)));
     }
+
+
+
+
 }
