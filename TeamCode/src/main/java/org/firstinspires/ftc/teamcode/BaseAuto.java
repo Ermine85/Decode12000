@@ -271,6 +271,9 @@ public class  BaseAuto extends LinearOpMode{
                 LF.setPower(-slowSpeed);
                 LB.setPower(-slowSpeed);
                 RF.setPower(slowSpeed);
+
+
+
                 RB.setPower(slowSpeed);
             }
 
@@ -320,8 +323,7 @@ public class  BaseAuto extends LinearOpMode{
     }
 
     double GetDistance(double TArea){
-        return (360.447 - (234.2437*TArea) + (50.93374 * Math.pow(TArea, 2)));
+        return (120.9809 + (331.8667 * Math.pow(Math.E, (-2.119361 * TArea))));
     }
-
 
 }
