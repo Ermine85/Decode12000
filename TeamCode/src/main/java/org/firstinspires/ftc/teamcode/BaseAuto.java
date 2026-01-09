@@ -359,9 +359,16 @@ public class  BaseAuto extends LinearOpMode{
         limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
         LLResult result = limelight.getLatestResult();
 
+        LF.setPower(Speed);
+        LB.setPower(Speed);
+        RF.setPower(Speed);
+        RB.setPower(Speed);
+
         while (result == null) {
             result = limelight.getLatestResult();
         }
+
+        stopPower();
 
         if (result.isValid()) {
             result = limelight.getLatestResult();
