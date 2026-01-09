@@ -358,27 +358,27 @@ public class  BaseAuto extends LinearOpMode{
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
         LLResult result = limelight.getLatestResult();
-        if (result != null) {
-            if (result.isValid()) {
+
+        while (result == null) {
+            result = limelight.getLatestResult();
+        }
+
+        if (result.isValid()) {
+            result = limelight.getLatestResult();
+            LF.setPower(Speed);
+            LB.setPower(Speed);
+            RF.setPower(Speed);
+            RB.setPower(Speed);
+
+            while (GetDistance(result.getTa()) < ATDistance) {
                 result = limelight.getLatestResult();
-                LF.setPower(Speed);
-                LB.setPower(Speed);
-                RF.setPower(Speed);
-                RB.setPower(Speed);
+                telemetry.addData("Distance", GetDistance(result.getTa()));
+                limeLightTelemetry();
+                telemetry.update();
 
-                while (GetDistance(result.getTa()) == null) {
-
-                }
-                while (GetDistance(result.getTa()) < ATDistance) {
-                    result = limelight.getLatestResult();
-                    telemetry.addData("Distance", GetDistance(result.getTa()));
-                    limeLightTelemetry();
-                    telemetry.update();
-
-                }
-
-                stopPower();
             }
+
+            stopPower();
         }
     }
 
