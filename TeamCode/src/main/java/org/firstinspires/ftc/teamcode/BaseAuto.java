@@ -121,6 +121,8 @@ public class  BaseAuto extends LinearOpMode{
 
         boolean LauncherMaxSpd = false;
 
+        goDistanceFromAprilTag(180, 5f);
+        /*
         goVroom(16000,.5f);
 
         turnRight(0.3, 10, Orientation);
@@ -136,7 +138,7 @@ public class  BaseAuto extends LinearOpMode{
         sleep(1000);
 
         turnLeft(0.3, 90, Orientation);
-
+        */
 
         //Auto Script
 /*
@@ -332,14 +334,14 @@ public class  BaseAuto extends LinearOpMode{
         if (result != null) {
             if (result.isValid()) {
 
-                while (GetDistance(result.getTa) < ATDistance) {
+                while (GetDistance(result.getTa()) < ATDistance) {
 
                     LF.setPower(Speed);
                     LB.setPower(Speed);
                     RF.setPower(Speed);
                     RB.setPower(Speed);
 
-                    telemetry.addData("LFE Value", GetDistance(result.getTa));
+                    telemetry.addData("LFE Value", GetDistance(result.getTa()));
                     limeLightTelemetry();
                     telemetry.update();
 
