@@ -322,8 +322,31 @@ public class  BaseAuto extends LinearOpMode{
 
     }
 
+    public void goDistanceFromAprilTag (int ATDistance, float Speed){
+
+        while(Encoder.GetDistance() < ATDistance){
+            //something
+
+            LF.setPower(Speed);
+            LB.setPower(Speed);
+            RF.setPower(Speed);
+            RB.setPower(Speed);
+
+            telemetry.addData("LFE Value",  Encoder.GetDistance());
+            limeLightTelemetry();
+            telemetry.update();
+
+            LF.setPower(0);
+            LB.setPower(0);
+            RF.setPower(0);
+            RB.setPower(0);
+        }
+    }
+
     double GetDistance(double TArea){
         return (120.9809 + (331.8667 * Math.pow(Math.E, (-2.119361 * TArea))));
     }
+
+
 
 }
