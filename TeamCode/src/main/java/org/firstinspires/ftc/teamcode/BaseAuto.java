@@ -121,7 +121,7 @@ public class  BaseAuto extends LinearOpMode{
 
         boolean LauncherMaxSpd = false;
 
-        goDistanceFromAprilTag(160, .5f);
+        goTowardAprilTag(160, .5f);
         /*
         goVroom(16000,.5f);
 
@@ -325,7 +325,7 @@ public class  BaseAuto extends LinearOpMode{
 
     }
 
-    public void goDistanceFromAprilTag (int ATDistance, float Speed){
+    public void goTowardAprilTag (int ATDistance, float Speed){
 
         // Limelight April Tag code first
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
@@ -340,6 +340,36 @@ public class  BaseAuto extends LinearOpMode{
                 RB.setPower(-Speed);
 
                 while (GetDistance(result.getTa()) > ATDistance) {
+                    result = limelight.getLatestResult();
+                    telemetry.addData("Distance", GetDistance(result.getTa()));
+                    limeLightTelemetry();
+                    telemetry.update();
+
+                }
+
+                stopPower();
+            }
+        }
+    }
+
+    public void goAwayFromAprilTag (int ATDistance, float Speed){
+
+        // Limelight April Tag code first
+        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+        LLResult result = limelight.getLatestResult();
+        if (result != null) {
+            if (result.isValid()) {
+                result = limelight.getLatestResult();
+                LF.setPower(Speed);
+                LB.setPower(Speed);
+                RF.setPower(Speed);
+                RB.setPower(Speed);
+
+                while (GetDistance(result.getTa()) == null) {
+
+                }
+                while (GetDistance(result.getTa()) < ATDistance) {
                     result = limelight.getLatestResult();
                     telemetry.addData("Distance", GetDistance(result.getTa()));
                     limeLightTelemetry();
