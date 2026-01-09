@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -324,22 +325,30 @@ public class  BaseAuto extends LinearOpMode{
 
     public void goDistanceFromAprilTag (int ATDistance, float Speed){
 
-        while(Encoder.GetDistance() < ATDistance){
-            //something
+        // Limelight April Tag code first
+        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+        LLResult result = limelight.getLatestResult();
+        if (result != null) {
+            if (result.isValid()) {
 
-            LF.setPower(Speed);
-            LB.setPower(Speed);
-            RF.setPower(Speed);
-            RB.setPower(Speed);
+                while (GetDistance(result.getTa) < ATDistance) {
 
-            telemetry.addData("LFE Value",  Encoder.GetDistance());
-            limeLightTelemetry();
-            telemetry.update();
+                    LF.setPower(Speed);
+                    LB.setPower(Speed);
+                    RF.setPower(Speed);
+                    RB.setPower(Speed);
 
-            LF.setPower(0);
-            LB.setPower(0);
-            RF.setPower(0);
-            RB.setPower(0);
+                    telemetry.addData("LFE Value", GetDistance(result.getTa));
+                    limeLightTelemetry();
+                    telemetry.update();
+
+                    LF.setPower(0);
+                    LB.setPower(0);
+                    RF.setPower(0);
+                    RB.setPower(0);
+                }
+            }
         }
     }
 
