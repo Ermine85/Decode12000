@@ -121,7 +121,7 @@ public class  BaseAuto extends LinearOpMode{
 
         boolean LauncherMaxSpd = false;
 
-        goDistanceFromAprilTag(180, 5f);
+        goDistanceFromAprilTag(160, .5f);
         /*
         goVroom(16000,.5f);
 
@@ -334,22 +334,22 @@ public class  BaseAuto extends LinearOpMode{
         if (result != null) {
             if (result.isValid()) {
 
-                while (GetDistance(result.getTa()) < ATDistance) {
+                LF.setPower(-Speed);
+                LB.setPower(-Speed);
+                RF.setPower(-Speed);
+                RB.setPower(-Speed);
 
-                    LF.setPower(Speed);
-                    LB.setPower(Speed);
-                    RF.setPower(Speed);
-                    RB.setPower(Speed);
+                while (GetDistance(result.getTa()) > ATDistance) {
 
                     telemetry.addData("LFE Value", GetDistance(result.getTa()));
                     limeLightTelemetry();
                     telemetry.update();
 
-                    LF.setPower(0);
-                    LB.setPower(0);
-                    RF.setPower(0);
-                    RB.setPower(0);
                 }
+                LF.setPower(0);
+                LB.setPower(0);
+                RB.setPower(0);
+                RF.setPower(0);
             }
         }
     }
