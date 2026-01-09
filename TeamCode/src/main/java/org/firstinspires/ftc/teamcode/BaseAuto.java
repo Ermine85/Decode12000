@@ -333,23 +333,21 @@ public class  BaseAuto extends LinearOpMode{
         LLResult result = limelight.getLatestResult();
         if (result != null) {
             if (result.isValid()) {
-
+                result = limelight.getLatestResult();
                 LF.setPower(-Speed);
                 LB.setPower(-Speed);
                 RF.setPower(-Speed);
                 RB.setPower(-Speed);
 
                 while (GetDistance(result.getTa()) > ATDistance) {
-
-                    telemetry.addData("LFE Value", GetDistance(result.getTa()));
+                    result = limelight.getLatestResult();
+                    telemetry.addData("Distance", GetDistance(result.getTa()));
                     limeLightTelemetry();
                     telemetry.update();
 
                 }
-                LF.setPower(0);
-                LB.setPower(0);
-                RB.setPower(0);
-                RF.setPower(0);
+
+                stopPower();
             }
         }
     }
