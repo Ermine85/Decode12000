@@ -366,6 +366,9 @@ public class  BaseAuto extends LinearOpMode{
 
         while (result == null) {
             result = limelight.getLatestResult();
+            telemetry.addData("Distance", GetDistance(result.getTa()));
+            limeLightTelemetry();
+            telemetry.update();
         }
 
         stopPower();
