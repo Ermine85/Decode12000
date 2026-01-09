@@ -121,7 +121,7 @@ public class  BaseAuto extends LinearOpMode{
 
         boolean LauncherMaxSpd = false;
 
-        goTowardAprilTag(160, .5f);
+        goAwayFromAprilTag(160, .5f);
         /*
         goVroom(16000,.5f);
 
@@ -320,6 +320,7 @@ public class  BaseAuto extends LinearOpMode{
 
                     //telemetry.addData("MT1 Location", "(" + truncate(x, 3) + ", " + truncate(y, 3) + ")");
                 }
+
             }
         }
 
@@ -359,16 +360,22 @@ public class  BaseAuto extends LinearOpMode{
         limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
         LLResult result = limelight.getLatestResult();
 
+        telemetry.addData("active",0);
+        telemetry.update();
+
+        sleep(3000);
+
         LF.setPower(Speed);
         LB.setPower(Speed);
         RF.setPower(Speed);
         RB.setPower(Speed);
 
-        while (result == null) {
+        while (result != null && !result.isValid()) {
             result = limelight.getLatestResult();
             telemetry.addData("Distance", GetDistance(result.getTa()));
             limeLightTelemetry();
             telemetry.update();
+
         }
 
         stopPower();
