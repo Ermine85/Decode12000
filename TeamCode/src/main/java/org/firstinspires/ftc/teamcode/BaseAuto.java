@@ -46,6 +46,8 @@ public class  BaseAuto extends LinearOpMode{
     private DcMotor LB = null;
 
     private DcMotor Intake = null;
+
+    private double timeOut = 3.00;
     private DcMotor Transfer = null;
     private DcMotorEx Launcher = null;
     private Servo LaunchServo = null;
@@ -128,16 +130,20 @@ public class  BaseAuto extends LinearOpMode{
 
         waitForStart();
 
+        LaunchServo.scaleRange(0.73, 0.83);
+
         LaunchServo.setPosition(1);
 
-        LaunchServo.scaleRange(0.73, 0.83);
 
         //Auto Script
 
 
         Intake.setPower(-1);
+
+        goAwayFromAprilTag(135, .5f);
+
         shootBalls(3000);
-       //goAwayFromAprilTag(130, .5f);
+
 
 
 
@@ -366,14 +372,16 @@ public class  BaseAuto extends LinearOpMode{
         telemetry.addData("active",0);
         telemetry.update();
 
-        sleep(3000);
+        //sleep(3000);
 
         LF.setPower(Speed);
         LB.setPower(Speed);
         RF.setPower(Speed);
         RB.setPower(Speed);
 
-        while (result != null && !result.isValid()) {
+        double endTime = getRuntime() + timeOut;
+
+        while ((result != null && !result.isValid()) && (getRuntime() < endTime)) {
             result = limelight.getLatestResult();
             telemetry.addData("Distance", GetDistance(result.getTa()));
             limeLightTelemetry();
@@ -382,6 +390,12 @@ public class  BaseAuto extends LinearOpMode{
         }
 
         stopPower();
+
+        if(getRuntime() > endTime){
+            return;
+        }
+
+
 
         if (result.isValid()) {
             result = limelight.getLatestResult();
