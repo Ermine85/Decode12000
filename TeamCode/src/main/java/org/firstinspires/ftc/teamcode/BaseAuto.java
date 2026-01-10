@@ -50,6 +50,8 @@ public class  BaseAuto extends LinearOpMode{
     private DcMotorEx Launcher = null;
     private Servo LaunchServo = null;
     private DcMotor Encoder = null;
+    private Servo ColorIndicator;
+
 
     private DcMotor leftEncoderMotor = null;
     private DcMotor rightEncoderMotor = null;
@@ -58,8 +60,11 @@ public class  BaseAuto extends LinearOpMode{
     YawPitchRollAngles Orientation;
 
     private Limelight3A limelight;
+    boolean LauncherMaxSpd = false;
 
     double slowSpeed = 0.15;
+
+
 
     @Override
     public void runOpMode() {
@@ -80,6 +85,11 @@ public class  BaseAuto extends LinearOpMode{
         RF = hardwareMap.get(DcMotor.class, "RightFront");
         RB = hardwareMap.get(DcMotor.class, "RightBack");
 
+        LF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        LB.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        RF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        RB.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         Encoder = hardwareMap.get(DcMotor.class, "Encoder");
 
         LF.setDirection(DcMotor.Direction.FORWARD);
@@ -91,6 +101,9 @@ public class  BaseAuto extends LinearOpMode{
         Transfer = hardwareMap.get(DcMotor.class, "Transfer");
         Launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
         LaunchServo = hardwareMap.get(Servo.class, "launch_servo");
+        ColorIndicator = hardwareMap.get(Servo.class, "color_indicator");
+
+        Launcher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         Transfer.setDirection(DcMotorSimple.Direction.FORWARD);
         Intake.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -119,58 +132,47 @@ public class  BaseAuto extends LinearOpMode{
 
         LaunchServo.scaleRange(0.73, 0.83);
 
-        boolean LauncherMaxSpd = false;
-
-        goAwayFromAprilTag(160, .5f);
-        /*
-        goVroom(16000,.5f);
-
-        turnRight(0.3, 10, Orientation);
-
-        sleep(1000);
-
-        turnLeft(0.3, 10, Orientation);
-
-        sleep(1000);
-
-        turnRight(0.3, 90, Orientation);
-
-        sleep(1000);
-
-        turnLeft(0.3, 90, Orientation);
-        */
-
         //Auto Script
-/*
-        goVroom(16000,0.5f);
 
-        //shoot three balls
+
+        Intake.setPower(-1);
         shootBalls(3000);
+       //goAwayFromAprilTag(130, .5f);
 
-        //Continue back
-        goVroom(10000,0.5f);
 
-        //Turn toward artifacts
-        turnRight(600, 0.5f);
 
-        //Drive to artifacts
-        goVroom(22000, 0.5f);
 
- */
+
     }
-    public void shootBalls(int Time){
-        Launcher.setVelocity(-2100);
 
-        sleep(1000);
+    public void shootBalls(int Time){
+
+        Launcher.setVelocity(-3800);
+        Transfer.setPower(0.5);
+
+
+        double LauncherVeloc = Launcher.getVelocity();
+
+        LauncherMaxSpd = LauncherVeloc < -1800;
+
+        while(!LauncherMaxSpd){
+
+            LauncherVeloc = Launcher.getVelocity();
+
+            LauncherMaxSpd = LauncherVeloc < -1800;
+        }
+
         LaunchServo.setPosition(0);
         Transfer.setPower(0.5);
-        Intake.setPower(-1);
+
 
         sleep(Time);
-        Launcher.setVelocity(0);
+        Launcher.setPower(2);
         Transfer.setPower(0);
         Intake.setPower(0);
         LaunchServo.setPosition(1);
+        sleep(500);
+        Launcher.setPower(0);
 
 
 
@@ -348,6 +350,7 @@ public class  BaseAuto extends LinearOpMode{
 
                 }
 
+
                 stopPower();
             }
         }
@@ -396,8 +399,11 @@ public class  BaseAuto extends LinearOpMode{
             }
 
             stopPower();
+
+
         }
     }
+
 
     double GetDistance(double TArea){
         return (120.9809 + (331.8667 * Math.pow(Math.E, (-2.119361 * TArea))));
