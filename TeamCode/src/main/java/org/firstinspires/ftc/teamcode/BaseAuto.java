@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DcMotorSimple; 
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -417,12 +417,20 @@ public class  BaseAuto extends LinearOpMode{
 
         }
     }
+    public void aprilTagAimCorrection (){
+        /*
+        while (AprilTagXOrSomething != 0) {
+            if (AprilTagXOrSomething < 0){
+                turn right
+            } else if ((AprilTagXOrSomething > 0)) {
+                turn left
 
+            }
+        }
+        */
+    }
 
     double GetDistance(double TArea){
         return (120.9809 + (331.8667 * Math.pow(Math.E, (-2.119361 * TArea))));
     }
-
-
-
 }
