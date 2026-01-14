@@ -245,7 +245,7 @@ public class OmniTest extends LinearOpMode {
             }
 
             if(gamepad1.b && LauncherMaxSpd || gamepad1.x){
-                LaunchServo.setPosition(0); //Down
+                LaunchServo.setPosition(0); // down
             }else{
 
                 LaunchServo.setPosition(1); // Up
@@ -318,6 +318,6 @@ public class OmniTest extends LinearOpMode {
     }
 
 
-
+//test push.
 
 }
