@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import static java.lang.Math.abs;
+
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
@@ -144,8 +146,11 @@ public class  BaseAuto extends LinearOpMode{
 
         aprilTagAimCorrection();
 
+        sleep(1500);
+
         shootBalls(3000);
 
+        Intake.setPower(0);
 
 
 
@@ -425,17 +430,27 @@ public class  BaseAuto extends LinearOpMode{
         limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
         LLResult result = limelight.getLatestResult();
 
-
         //If it can see the april tag, but it isn't straight ahead, it will try to correct
-        while (GetDistance(result.getTx()) != 0) {
-            if (GetDistance(result.getTx()) < -5){
-                turnLeft(0.5, 10, orientation);
-            } else if (GetDistance(result.getTx()) > 5) {
-                turnRight(0.5, 10, orientation);
+        while (abs(result.getTx()) >= abs(5.0)) {
+            result = limelight.getLatestResult();
+            telemetry.addData("tx", abs(result.getTx()));
+            telemetry.update();
+
+            if (result.getTx() < 0) {
+                LF.setPower(-0.3);
+                LB.setPower(-0.3);
+                RF.setPower(0.3);
+                RB.setPower(0.3);
+            } else if (result.getTx() > 0){
+                LF.setPower(0.3);
+                LB.setPower(0.3);
+                RF.setPower(-0.3);
+                RB.setPower(-0.3);
             } else {
                 stopPower();
             }
         }
+        stopPower();
     }
 
     double GetDistance(double TArea){
