@@ -142,6 +142,8 @@ public class  BaseAuto extends LinearOpMode{
 
         goAwayFromAprilTag(135, .5f);
 
+        aprilTagAimCorrection();
+
         shootBalls(3000);
 
 
@@ -418,16 +420,22 @@ public class  BaseAuto extends LinearOpMode{
         }
     }
     public void aprilTagAimCorrection (){
-        /*
-        while (AprilTagXOrSomething != 0) {
-            if (AprilTagXOrSomething < 0){
-                turn right
-            } else if ((AprilTagXOrSomething > 0)) {
-                turn left
 
+        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+        LLResult result = limelight.getLatestResult();
+
+
+        //If it can see the april tag, but it isn't straight ahead, it will try to correct
+        while (GetDistance(result.getTx()) != 0) {
+            if (GetDistance(result.getTx()) < -5){
+                turnLeft(0.5, 10, orientation);
+            } else if (GetDistance(result.getTx()) > 5) {
+                turnRight(0.5, 10, orientation);
+            } else {
+                stopPower();
             }
         }
-        */
     }
 
     double GetDistance(double TArea){
