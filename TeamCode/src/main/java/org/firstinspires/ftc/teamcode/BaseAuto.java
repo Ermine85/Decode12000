@@ -142,7 +142,7 @@ public class  BaseAuto extends LinearOpMode{
 
         Intake.setPower(-1);
 
-        goAwayFromAprilTag(135, .5f);
+        goAwayFromAprilTag(135, .5f, 16000);
 
         aprilTagAimCorrection();
 
@@ -369,7 +369,16 @@ public class  BaseAuto extends LinearOpMode{
         }
     }
 
-    public void goAwayFromAprilTag (int ATDistance, float Speed){
+    public void goAwayFromAprilTag (int ATDistance, float Speed, int disOverride){
+        //Encorder stuff
+        Encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        Encoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        LF.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        LB.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        RF.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        RB.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
 
         // Limelight April Tag code first
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
@@ -386,22 +395,23 @@ public class  BaseAuto extends LinearOpMode{
         RF.setPower(Speed);
         RB.setPower(Speed);
 
-        double endTime = getRuntime() + timeOut;
-
-        while ((result != null && !result.isValid()) && (getRuntime() < endTime)) {
+       //double endTime = getRuntime() + timeOut;
+        // dis = distance
+        while ((result != null && !result.isValid()) || (Encoder.getCurrentPosition() < disOverride) /*&& (getRuntime() < endTime )*/) {
             result = limelight.getLatestResult();
             telemetry.addData("Distance", GetDistance(result.getTa()));
+            telemetry.addData("LFE Value",  Encoder.getCurrentPosition());
             limeLightTelemetry();
             telemetry.update();
 
         }
 
         stopPower();
-
+        /*
         if(getRuntime() > endTime){
             return;
         }
-
+        */
 
 
         if (result.isValid()) {
@@ -446,8 +456,6 @@ public class  BaseAuto extends LinearOpMode{
                 LB.setPower(0.3);
                 RF.setPower(-0.3);
                 RB.setPower(-0.3);
-            } else {
-                stopPower();
             }
         }
         stopPower();
