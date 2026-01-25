@@ -148,7 +148,7 @@ public class  BaseAuto extends LinearOpMode{
 
         sleep(1500);
 
-        shootBalls(3000);
+
 
         Intake.setPower(0);
 
@@ -430,7 +430,7 @@ public class  BaseAuto extends LinearOpMode{
             }
 
             stopPower();
-
+            shootBalls(3000);
 
         }
     }
