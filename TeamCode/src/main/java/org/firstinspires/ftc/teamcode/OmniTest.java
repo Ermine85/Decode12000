@@ -40,6 +40,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.BatteryChecker;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -48,6 +49,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 import java.util.List;
+import java.util.Objects;
 
 /*
  * This file contains an example of a Linear "OpMode".
@@ -78,7 +80,7 @@ import java.util.List;
  */
 
 @TeleOp(name="DRIVE 2: The Sequel", group="Linear OpMode")
-//@Disabled
+@Disabled
 public class OmniTest extends LinearOpMode {
 
     // Declare Opmode member for the Limelight 3A camera
@@ -93,14 +95,23 @@ public class OmniTest extends LinearOpMode {
 
     private DcMotor Intake = null;
     private DcMotor Transfer = null;
+    private DcMotor Index = null;
     private DcMotorEx Launcher = null;
-    private Servo LaunchServo = null;
+    private Servo Pusher = null;
     private Servo ColorIndicator;
 
     private boolean Pressed = false;
 
     private boolean RunLauncer = false;
+    private String IndexMode = "INTAKE";
+    private Servo Hood = null;
 
+    private double CPR = 142; //PPR * 4
+
+    private double revolutions = 0;
+    private double HoodPos = 0;
+    private int trialVel = -1000;
+    private TouchSensor stopper = null;
 
 
     @Override
@@ -121,11 +132,14 @@ public class OmniTest extends LinearOpMode {
         LeftBack = hardwareMap.get(DcMotor.class, "LeftBack");
         RightFront = hardwareMap.get(DcMotor.class, "RightFront");
         RightBack = hardwareMap.get(DcMotor.class, "RightBack");
-        Intake = hardwareMap.get(DcMotor.class, "Intake");
-        Transfer = hardwareMap.get(DcMotor.class, "Transfer");
+
+        Index = hardwareMap.get(DcMotor.class, "Index");
+        stopper = hardwareMap.get(TouchSensor.class, "Stopper");
+        Hood = hardwareMap.get(Servo.class, "Hood");
+
         Launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
-        LaunchServo = hardwareMap.get(Servo.class, "launch_servo");
-        ColorIndicator = hardwareMap.get(Servo.class, "color_indicator");
+        Pusher = hardwareMap.get(Servo.class, "Pusher");
+        ColorIndicator = hardwareMap.get(Servo.class, "Color");
         IMU imu = hardwareMap.get(IMU.class, "imu");
 
         // ########################################################################################
@@ -143,11 +157,13 @@ public class OmniTest extends LinearOpMode {
         RightFront.setDirection(DcMotor.Direction.FORWARD);
         RightBack.setDirection(DcMotor.Direction.REVERSE);
 
-        Transfer.setDirection(DcMotor.Direction.FORWARD);
-        Intake.setDirection(DcMotor.Direction.FORWARD);
+        //Transfer.setDirection(DcMotor.Direction.FORWARD);
+        //Intake.setDirection(DcMotor.Direction.FORWARD);
         Launcher.setDirection(DcMotor.Direction.FORWARD);
 
         Launcher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+
+        Index.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
@@ -156,16 +172,16 @@ public class OmniTest extends LinearOpMode {
         waitForStart();
 
         runtime.reset();
-        LaunchServo.setPosition(1);
+
 
         boolean LauncherMaxSpd = false;
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            // Limelight April Tag code first
-            YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-            limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+
+            //limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
             LLResult result = limelight.getLatestResult();
+
             if (result != null) {
                 if (result.isValid()) {
                     Pose3D botpose = result.getBotpose();
@@ -192,6 +208,95 @@ public class OmniTest extends LinearOpMode {
                 }
             }
 
+            int distance = (int)(GetDistance(result.getTa()));
+             Pusher.scaleRange(0.125, 0.425);
+            //SetIndexMode();
+            telemetry.addData("Trial Vel", trialVel);
+            telemetry.addData("Attempt vel", -1450 - (200/30 * (distance - 270)));
+
+            if(distance > 270 && result.isValid()){
+                HoodPos = 0.3;
+                Hood.setPosition(HoodPos);
+                if(result.getTx() < 3.25 && result.getTx() > -1.5){
+                    ColorIndicator.setPosition(0.5);
+                }else if(result.getTx() > 3.25){
+                    ColorIndicator.setPosition(0.35);
+                }else{
+                    ColorIndicator.setPosition(0.6);
+                }
+                if(gamepad1.yWasReleased()){
+                    Launch(3, -1450 - (200 / 30 * (distance - 270)));
+                }
+
+            }else{
+                ColorIndicator.setPosition(0.28);
+            }
+
+/*
+            if(gamepad1.a){
+                LeftFront.setPower(1);
+            }else{
+                LeftFront.setPower(0);
+            }
+
+            if(gamepad1.b){
+                LeftBack.setPower(1);
+            }else{
+                LeftBack.setPower(0);
+            }
+            if(gamepad1.x){
+                RightFront.setPower(1);
+            }else{
+                RightFront.setPower(0);
+            }
+            if(gamepad1.y){
+                RightBack.setPower(1);
+            }else{
+                RightBack.setPower(0);
+            }*/
+            /*if(gamepad1.aWasReleased()){
+                Launch(3, -1150);
+            }
+*/
+            if(gamepad1.bWasReleased()){
+                Launch(3, trialVel);
+            }
+
+            if(gamepad1.leftBumperWasReleased()){
+                trialVel += 50;
+            }
+            if(gamepad1.rightBumperWasReleased()){
+                trialVel -= 50;
+            }
+
+
+            if(gamepad1.xWasReleased()){
+                Load();
+            }
+
+            if(gamepad1.startWasReleased()){
+                revolutions = 0;
+            }
+
+            if(gamepad1.backWasReleased()){
+                Revolve(1);
+            }
+            //0.2 low, 1 is high
+            if(gamepad1.dpadLeftWasReleased() && HoodPos > 0){
+                HoodPos -= 0.1;
+            }
+            if(gamepad1.dpadRightWasReleased() && HoodPos < 1){
+                HoodPos += 0.1;
+            }
+
+            Hood.setPosition(HoodPos);
+
+            telemetry.addData("HoodPos", HoodPos);
+            telemetry.addData("Touch: ", stopper.isPressed());
+
+
+            Launcher.setVelocity(gamepad1.right_trigger * -6800);
+            //Launcher.setVelocity(gamepad1.left_trigger * 3800);
 
             double max;
 
@@ -221,62 +326,7 @@ public class OmniTest extends LinearOpMode {
                 backLeftPower   /= max;
                 backRightPower  /= max;
             }
-            LaunchServo.scaleRange(0.73, 0.83);
 
-            Intake.setPower(-gamepad1.left_trigger);
-
-            Transfer.setPower(gamepad1.left_trigger/1.75);
-
-            if(gamepad1.left_bumper){
-                Transfer.setPower((1/1.75));
-            }
-
-            if(gamepad1.right_bumper && !Pressed){
-                RunLauncer = !RunLauncer;
-                Pressed = true;
-            }else if(!gamepad1.right_bumper){
-                Pressed = false;
-            }
-
-            if(RunLauncer){
-                Launcher.setVelocity(-3800);
-            }else{
-                Launcher.setVelocity(-gamepad1.right_trigger * 3800);
-            }
-
-            if(gamepad1.b && LauncherMaxSpd || gamepad1.x){
-                LaunchServo.setPosition(0); // down
-            }else{
-
-                LaunchServo.setPosition(1); // Up
-            }
-
-            /*
-            if(gamepad1.start){
-                LaunchServo.setPosition(0);
-            }else{
-                LaunchServo.setPosition(1);
-            }
-            */
-
-
-            telemetry.addData("Servo Pos", LaunchServo.getPosition());
-            // This is test code:
-            //
-            // Uncomment the following code to test your motor directions.
-            // Each button should make the corresponding motor run FORWARD.
-            //   1) First get all the motors to take to correct positions on the robot
-            //      by adjusting your Robot Configuration if necessary.
-            //   2) Then make sure they run in the correct direction by modifying the
-            //      the setDirection() calls above.
-            // Once the correct motors move in the correct direction re-comment this code.
-
-            /*
-            frontLeftPower  = gamepad1.x ? 1.0 : 0.0;  // X gamepad
-            backLeftPower   = gamepad1.a ? 1.0 : 0.0;  // A gamepad
-            frontRightPower = gamepad1.y ? 1.0 : 0.0;  // Y gamepad
-            backRightPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
-            */
 
             // Send calculated power to wheels
             if(!gamepad1.dpad_down){
@@ -292,9 +342,9 @@ public class OmniTest extends LinearOpMode {
                 RightBack.setPower(backRightPower / 3);
             }
 
-            ColorIndicator.scaleRange(0.277, 0.5); //(0.277 is red 0.5 is green so it makes the 0-1 red-green)
+            //ColorIndicator.scaleRange(0.277, 0.5); //(0.277 is red 0.5 is green so it makes the 0-1 red-green)
 
-            ColorIndicator.setPosition(Math.abs(LauncherVeloc/2200)); //if no velocity it will be red, the more velocity closer to max (2200) will make it closer to green
+            //ColorIndicator.setPosition(Math.abs(LauncherVeloc/2200)); //if no velocity it will be red, the more velocity closer to max (2200) will make it closer to green
             //Tolerance Value.
             LauncherMaxSpd = LauncherVeloc < -1800;
 
@@ -312,12 +362,124 @@ public class OmniTest extends LinearOpMode {
         double factor = Math.pow(10, places);
         return Math.floor(value * factor) / factor;
     }
+    void Launch(int amount, int vel){
+        int times = amount;
+        if(revolutions % 2 == 0){
+            Revolve(1);
+        }
+
+        Launcher.setVelocity(vel);
+        int vel2 = 0;
+        do{
+
+
+            if(times == amount){
+                while(Launcher.getVelocity() > vel){
+                    Launcher.setVelocity(vel);
+                }
+                vel2 = (int)Launcher.getVelocity();
+            }else{
+                while(Launcher.getVelocity() > vel2){
+                    Launcher.setVelocity(vel2);
+                }
+            }
+            //waitTime(1);
+            Pusher.setPosition(1);
+            waitTime(0.5);
+            Pusher.setPosition(0);
+            waitTime(0.5);
+            Revolve(2);
+            amount -= 1;
+
+        }while(amount != 0);
+
+    }
 
     double GetDistance(double TArea){
         return (120.9809 + (331.8667 * Math.pow(Math.E, (-2.119361 * TArea))));
     }
 
+    void Revolve(int times){
+        Index.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-//test push.
+        revolutions += times;
+        boolean hit = true;
+        while(times > 0){
+
+            Index.setPower(0.20);
+            if(!hit && stopper.isPressed()){
+                hit = true;
+                times -= 1;
+            }
+            if(!stopper.isPressed()){
+                hit = false;
+            }
+        }
+
+        Index.setPower(0);
+
+    }
+
+    void SetIndexMode(){
+        if((Objects.equals(IndexMode, "INTAKE") && (revolutions % 2 == 0))){
+            Revolve(1);
+        }
+
+        if((Objects.equals(IndexMode, "LAUNCH")) && (revolutions % 2 == 1)){
+            Revolve(1);
+        }
+    }
+
+    void waitTime(double time){
+        double end = getRuntime() + time;
+        while(getRuntime() < end){
+
+        }
+    }
+
+    double Limelight(YawPitchRollAngles orientation){
+
+        limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+        LLResult result = limelight.getLatestResult();
+
+        if (result != null) {
+            if (result.isValid()) {
+                Pose3D botpose = result.getBotpose();
+                telemetry.addData("tx", result.getTx());
+                telemetry.addData("ty", result.getTy());
+                telemetry.addData("ta", result.getTa());
+                telemetry.addData("Distance", GetDistance(result.getTa()));
+                //telemetry.addData("Botpose", botpose.toString());
+
+                List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
+                for (LLResultTypes.FiducialResult fiducial : fiducials) {
+                    int id = fiducial.getFiducialId(); // The ID number of the fiducial
+
+                    telemetry.addData("Fiducial " + id, " " );
+                }
+
+                if (botpose != null) {
+                    double x = botpose.getPosition().x;
+
+                    double y = botpose.getPosition().y;
+
+                    //telemetry.addData("MT1 Location", "(" + truncate(x, 3) + ", " + truncate(y, 3) + ")");
+                }
+            }
+        }
+        return result.getTa();
+
+    }
+
+    void Load(){
+        if(revolutions % 2 == 1){
+            Revolve(1);
+        }
+        Revolve(2);
+        waitTime(0.25);
+        Revolve(2);
+        waitTime(0.25);
+        Revolve(2);
+    }
 
 }
