@@ -29,9 +29,12 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import static java.lang.Math.abs;
+
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -113,6 +116,8 @@ public class OmniTest extends LinearOpMode {
     private int trialVel = -1000;
     private TouchSensor stopper = null;
 
+    IMU imu;
+    YawPitchRollAngles Orientation;
 
     @Override
     public void runOpMode() {
@@ -168,6 +173,16 @@ public class OmniTest extends LinearOpMode {
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
         telemetry.update();
+
+        imu = hardwareMap.get(IMU.class, "imu");
+
+        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
+        RevHubOrientationOnRobot.UsbFacingDirection UsbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+        RevHubOrientationOnRobot RevOrientation = new RevHubOrientationOnRobot(logoDirection, UsbDirection);
+
+        imu.initialize(new IMU.Parameters(RevOrientation));
+        imu.resetYaw();
+        Orientation = imu.getRobotYawPitchRollAngles();
 
         waitForStart();
 
@@ -480,6 +495,44 @@ public class OmniTest extends LinearOpMode {
         Revolve(2);
         waitTime(0.25);
         Revolve(2);
+    }
+
+    public void stopPower(){ // stops wheels :)
+
+        LeftFront.setPower(0);
+        LeftBack.setPower(0);
+        RightFront.setPower(0);
+        RightBack.setPower(0);
+
+    }
+
+    public void aprilTagAimCorrection (){
+
+        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+        LLResult result = limelight.getLatestResult();
+
+        //If it can see the april tag, but it isn't straight ahead, it will try to correct
+        while (abs(result.getTx()) >= abs(5.0)) {
+            result = limelight.getLatestResult();
+            telemetry.addData("tx", abs(result.getTx()));
+            telemetry.update();
+
+            if (result.getTx() < 0) {
+                LeftFront.setPower(-0.3);
+                LeftBack.setPower(-0.3);
+                RightFront.setPower(0.3);
+                RightBack.setPower(0.3);
+            } else if (result.getTx() > 0){
+                LeftFront.setPower(0.3);
+                LeftBack.setPower(0.3);
+                RightFront.setPower(-0.3);
+                RightBack.setPower(-0.3);
+            } else {
+                stopPower();
+            }
+        }
+        stopPower();
     }
 
 }
