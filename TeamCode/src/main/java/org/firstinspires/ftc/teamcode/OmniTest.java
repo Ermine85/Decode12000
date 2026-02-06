@@ -399,6 +399,7 @@ public class OmniTest extends LinearOpMode {
                 }
             }
             //waitTime(1);
+            aprilTagAimCorrection();
             Pusher.setPosition(1);
             waitTime(0.5);
             Pusher.setPosition(0);
