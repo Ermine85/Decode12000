@@ -67,7 +67,7 @@ import java.util.Vector;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
 @TeleOp(name = "CamTest", group = "Concept")
-
+@Disabled
 public class CameraGimTestScript extends LinearOpMode {
 
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
@@ -108,6 +108,12 @@ public class CameraGimTestScript extends LinearOpMode {
     private double AprilTagX = 0;
     private double AprilTagY = 0;
     private double AprilTagZ = 0;
+
+    private static final int[] motif1 = {1,2,2};
+    private static final int[] motif2 = {2,1,2};
+    private static final int[] motif3 = {2,2,1};
+    private int[] chosenmotif;
+    private int[] currentorder;
 
     /**
      * The variable to store our instance of the AprilTag processor.
@@ -172,10 +178,13 @@ public class CameraGimTestScript extends LinearOpMode {
 
         telemetry.update();
 
+        chosenmotif = motif1;
 
         waitForStart();
 
         if (opModeIsActive()) {
+
+
             //VERY IMPORTANT LINE: DO NOT EDIT
             /*
             0.555776        0.777888     1
@@ -187,6 +196,7 @@ public class CameraGimTestScript extends LinearOpMode {
             XServo.setPosition(0.5);
 
             while (opModeIsActive()) {
+
 
                 telemetry.addData("Servo", XServo.getPosition());
 

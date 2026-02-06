@@ -29,16 +29,21 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.teamcode.TransferedWayPoint.findLargest;
+
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.BatteryChecker;
@@ -48,6 +53,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -93,25 +99,44 @@ public class CurrentOmni extends LinearOpMode {
     private DcMotor RightFront = null;
     private DcMotor RightBack = null;
 
-    private DcMotor Intake = null;
-    private DcMotor Transfer = null;
     private DcMotor Index = null;
     private DcMotorEx Launcher = null;
     private Servo Pusher = null;
     private Servo ColorIndicator;
+    private CRServo flagServo;
 
-    private boolean Pressed = false;
-
-    private boolean RunLauncer = false;
     private String IndexMode = "INTAKE";
     private Servo Hood = null;
 
-    private double CPR = 142; //PPR * 4
+    //private double CPR = 142; //PPR * 4
 
     private double revolutions = 0;
+    private int revolveTimes = 0;
     private double HoodPos = 0;
     private int trialVel = -1000;
     private TouchSensor stopper = null;
+    private boolean hit;
+    private double endTime;
+
+    private double bigA;
+    private double smallA;
+    private int teamTag = 20;
+
+    private boolean IDRegistering = true;
+
+    private boolean OnTarget = false;
+
+    //Color
+    private ColorSensor color1;
+    private ColorSensor color2;
+    private ColorSensor color3;
+
+    private static final int[] motif1 = {1,2,2};
+    private static final int[] motif2 = {2,1,2};
+    private static final int[] motif3 = {2,2,1};
+    private static final int[] purple = {2,2,2};
+    private int[] chosenmotif;
+    private int[] currentorder;
 
 
     @Override
@@ -136,11 +161,16 @@ public class CurrentOmni extends LinearOpMode {
         Index = hardwareMap.get(DcMotor.class, "Index");
         stopper = hardwareMap.get(TouchSensor.class, "Stopper");
         Hood = hardwareMap.get(Servo.class, "Hood");
+        flagServo = hardwareMap.get(CRServo.class, "Flag");
 
         Launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
         Pusher = hardwareMap.get(Servo.class, "Pusher");
         ColorIndicator = hardwareMap.get(Servo.class, "Color");
         IMU imu = hardwareMap.get(IMU.class, "imu");
+        //Color
+        color1 = hardwareMap.get(ColorSensor.class, "Color1");
+        color2 = hardwareMap.get(ColorSensor.class, "Color2");
+        color3 = hardwareMap.get(ColorSensor.class, "Color3");
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -157,11 +187,23 @@ public class CurrentOmni extends LinearOpMode {
         RightFront.setDirection(DcMotor.Direction.FORWARD);
         RightBack.setDirection(DcMotor.Direction.REVERSE);
 
+        LeftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        LeftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        RightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        RightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        LeftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        LeftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        LeftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        LeftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        Launcher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        Index.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         //Transfer.setDirection(DcMotor.Direction.FORWARD);
         //Intake.setDirection(DcMotor.Direction.FORWARD);
         Launcher.setDirection(DcMotor.Direction.FORWARD);
 
         Launcher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        Launcher.setVelocityPIDFCoefficients(2, 25, 16, 1);
 
         Index.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -169,6 +211,7 @@ public class CurrentOmni extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
+        chosenmotif = motif1;
         waitForStart();
 
         runtime.reset();
@@ -179,12 +222,27 @@ public class CurrentOmni extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
+            //constantly update what the color sensors see in regard to order (load position only).
+            currentorder = new int[] {sensorDetectColor(color1), sensorDetectColor(color2), sensorDetectColor(color3)};
+
+            telemetry.addLine();
+            if(teamTag == 20){
+                telemetry.addData("Team", "Blue");
+            }else if(teamTag == 24){
+                telemetry.addData("Team", "Red");
+            }
+            telemetry.addLine();
             //limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
             LLResult result = limelight.getLatestResult();
 
+            //Limelight
             if (result != null) {
                 if (result.isValid()) {
                     Pose3D botpose = result.getBotpose();
+
+                    OnTarget = (result.getFiducialResults().get(0).getFiducialId() == teamTag);
+                    telemetry.addData("looking at", result.getFiducialResults().get(0).getFiducialId());
+
                     telemetry.addData("tx", result.getTx());
                     telemetry.addData("ty", result.getTy());
                     telemetry.addData("ta", result.getTa());
@@ -209,69 +267,92 @@ public class CurrentOmni extends LinearOpMode {
             }
 
             int distance = (int)(GetDistance(result.getTa()));
+
             Pusher.scaleRange(0.125, 0.425);
+            //Pusher.setPosition(1);
             //SetIndexMode();
+            telemetry.addData("Color: ", sensorDetectColor(color1));
             telemetry.addData("Trial Vel", trialVel);
             telemetry.addData("Attempt vel", -1450 - (200/30 * (distance - 270)));
 
-            if(distance > 270 && result.isValid()){
-                HoodPos = 0.3;
+            if(distance > 265 && result.isValid() && (OnTarget || !IDRegistering)){
+                HoodPos = 0.35;
                 Hood.setPosition(HoodPos);
-                if(result.getTx() < 3.25 && result.getTx() > -1.5){
+                if(result.getTx() < bigA && result.getTx() > smallA){
                     ColorIndicator.setPosition(0.5);
-                }else if(result.getTx() > 3.25){
+
+                }else if(result.getTx() > bigA){
                     ColorIndicator.setPosition(0.35);
                 }else{
                     ColorIndicator.setPosition(0.6);
                 }
-                if(gamepad1.yWasReleased()){
-                    Launch(3, -1450 - (200 / 30 * (distance - 270)));
+                if(gamepad1.y){
+                    Launch(3, -1450 - ((200 / 30) * (distance - 270)));
                 }
 
+            }else if(distance < 190 && distance > 135 && (OnTarget || !IDRegistering)){
+
+                //ColorIndicator.setPosition(0.28);
+                if(result.getTx() < 5 && result.getTx() > -3){
+                    ColorIndicator.setPosition(0.5);
+
+                }else if(result.getTx() > 5){
+                    ColorIndicator.setPosition(0.35);
+                }else{
+                    ColorIndicator.setPosition(0.6);
+                }
+                if(gamepad1.y){
+                    Launch(3, -1200 - ((155 / 55) * (distance - 135)));
+                }
+
+            }else if(distance < 135 && distance > 120 && (OnTarget || !IDRegistering)){
+                //ColorIndicator.setPosition(0.28);
+                if(result.getTx() < 5 && result.getTx() > -3){
+                    ColorIndicator.setPosition(0.5);
+                }else if(result.getTx() > 5){
+                    ColorIndicator.setPosition(0.35);
+                }else{
+                    ColorIndicator.setPosition(0.6);
+                }
+                if(gamepad1.y){
+                    Launch(3, -960 - ((135 / 15) * (distance - 120)));
+                }
             }else{
                 ColorIndicator.setPosition(0.28);
             }
 
-/*
-            if(gamepad1.a){
-                LeftFront.setPower(1);
-            }else{
-                LeftFront.setPower(0);
+            //Hood Change close Range
+            if(distance > 140 && distance < 190){
+                HoodPos = 0.65;
+                Hood.setPosition(HoodPos);
+            }else if(distance < 130){
+                HoodPos = 0.75;
+                Hood.setPosition(HoodPos);
             }
 
-            if(gamepad1.b){
-                LeftBack.setPower(1);
-            }else{
-                LeftBack.setPower(0);
-            }
-            if(gamepad1.x){
-                RightFront.setPower(1);
-            }else{
-                RightFront.setPower(0);
-            }
-            if(gamepad1.y){
-                RightBack.setPower(1);
-            }else{
-                RightBack.setPower(0);
-            }*/
-            /*if(gamepad1.aWasReleased()){
-                Launch(3, -1150);
-            }
-*/
-            if(gamepad1.bWasReleased()){
-                Launch(3, trialVel);
+            if(gamepad1.rightStickButtonWasReleased()){
+                IDRegistering = !IDRegistering;
             }
 
-            if(gamepad1.leftBumperWasReleased()){
+
+            /*if(gamepad1.leftBumperWasReleased()){
                 trialVel += 50;
             }
             if(gamepad1.rightBumperWasReleased()){
                 trialVel -= 50;
-            }
-
+            }*/
 
             if(gamepad1.xWasReleased()){
-                Load();
+                hit = true;
+                if(Empty()){
+                    revolveTimes = 6;
+                }
+            }
+
+            if(!Empty() && revolveTimes == 0){
+                if(!Arrays.equals(currentorder, chosenmotif)){
+                    revolveTimes = 2;
+                }
             }
 
             if(gamepad1.startWasReleased()){
@@ -279,7 +360,7 @@ public class CurrentOmni extends LinearOpMode {
             }
 
             if(gamepad1.backWasReleased()){
-                Revolve(1);
+                revolveTimes = 1;
             }
             //0.2 low, 1 is high
             if(gamepad1.dpadLeftWasReleased() && HoodPos > 0){
@@ -289,13 +370,21 @@ public class CurrentOmni extends LinearOpMode {
                 HoodPos += 0.1;
             }
 
+            if(gamepad1.dpad_up){
+                flagServo.setPower(-1);
+            }else if(gamepad1.dpad_down){
+                flagServo.setPower(1);
+            }else{
+                flagServo.setPower(-0.01);
+            }
+
             Hood.setPosition(HoodPos);
 
             telemetry.addData("HoodPos", HoodPos);
             telemetry.addData("Touch: ", stopper.isPressed());
 
-
-            Launcher.setVelocity(gamepad1.right_trigger * -6800);
+            Pusher.setPosition(gamepad1.right_trigger);
+            //Launcher.setVelocity(gamepad1.right_trigger * -6800);
             //Launcher.setVelocity(gamepad1.left_trigger * 3800);
 
             double max;
@@ -329,7 +418,7 @@ public class CurrentOmni extends LinearOpMode {
 
 
             // Send calculated power to wheels
-            if(!gamepad1.dpad_down){
+            if(gamepad1.left_trigger == 0){
                 LeftFront.setPower(frontLeftPower / 1.5);
                 RightFront.setPower(frontRightPower / 1.5);
                 LeftBack.setPower(backLeftPower / 1.5);
@@ -342,7 +431,34 @@ public class CurrentOmni extends LinearOpMode {
                 RightBack.setPower(backRightPower / 3);
             }
 
-            //ColorIndicator.scaleRange(0.277, 0.5); //(0.277 is red 0.5 is green so it makes the 0-1 red-green)
+            if(teamTag == 20){
+                if(gamepad1.leftStickButtonWasPressed()){
+                    teamTag = 24;
+                }
+                bigA = 3.25;
+                smallA = -1.5;
+            }else{
+                if(gamepad1.leftStickButtonWasPressed()){
+                    teamTag = 20;
+                }
+                bigA = 1.5;
+                smallA = -3.25;
+            }
+
+            // Revolve
+             //
+             //
+            if(gamepad1.left_bumper){
+                hit = true;
+                Index.setPower(-0.1);
+            }else if (revolveTimes == 0){
+                Index.setPower(0);
+            }
+            if(revolveTimes > 0) {
+                revolves();
+            }
+
+                //ColorIndicator.scaleRange(0.277, 0.5); //(0.277 is red 0.5 is green so it makes the 0-1 red-green)
 
             //ColorIndicator.setPosition(Math.abs(LauncherVeloc/2200)); //if no velocity it will be red, the more velocity closer to max (2200) will make it closer to green
             //Tolerance Value.
@@ -364,6 +480,7 @@ public class CurrentOmni extends LinearOpMode {
     }
     void Launch(int amount, int vel){
         int times = amount;
+
         if(revolutions % 2 == 0){
             Revolve(1);
         }
@@ -372,8 +489,10 @@ public class CurrentOmni extends LinearOpMode {
         int vel2 = 0;
         do{
 
-
-            if(times == amount){
+            while(Launcher.getVelocity() > vel){
+                Launcher.setVelocity(vel);
+            }
+            /*if(times == amount){
                 while(Launcher.getVelocity() > vel){
                     Launcher.setVelocity(vel);
                 }
@@ -382,7 +501,12 @@ public class CurrentOmni extends LinearOpMode {
                 while(Launcher.getVelocity() > vel2){
                     Launcher.setVelocity(vel2);
                 }
+            }*/
+            waitTime(0.5);
+            if(gamepad1.b){
+                return;
             }
+            Launcher.setVelocity(vel2);
             //waitTime(1);
             Pusher.setPosition(1);
             waitTime(0.5);
@@ -392,7 +516,7 @@ public class CurrentOmni extends LinearOpMode {
             amount -= 1;
 
         }while(amount != 0);
-
+        revolveTimes = 1;
     }
 
     double GetDistance(double TArea){
@@ -400,26 +524,59 @@ public class CurrentOmni extends LinearOpMode {
     }
 
     void Revolve(int times){
+        double checkTimer = getRuntime() + 1;
         Index.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         revolutions += times;
         boolean hit = true;
         while(times > 0){
 
-            Index.setPower(0.20);
+            if(gamepad1.left_bumper){
+                hit = true;
+                Index.setPower(-0.1);
+            }
+            else{
+                Index.setPower(0.8);
+            }
+
             if(!hit && stopper.isPressed()){
                 hit = true;
                 times -= 1;
+                if(times == 0){
+                    Index.setPower(0);
+                }
+                checkTimer = getRuntime() + 1;
             }
+            /*if(getRuntime() > checkTimer){
+
+                while(!stopper.isPressed()){
+                    Index.setPower(-0.15);
+                }
+                Index.setPower(0.15);
+                checkTimer = getRuntime() + 1;
+            }*/
             if(!stopper.isPressed()){
                 hit = false;
             }
-        }
 
+        }
+        //waitTime(0.15);
+        /*while(!stopper.isPressed()){
+            Index.setPower(-0.15);
+        }*/
         Index.setPower(0);
+
 
     }
 
+    boolean Empty(){
+        for (int i : currentorder){
+            if (i == 0){
+                return true;
+            }
+        }
+        return false;
+    }
     void SetIndexMode(){
         if((Objects.equals(IndexMode, "INTAKE") && (revolutions % 2 == 0))){
             Revolve(1);
@@ -429,6 +586,39 @@ public class CurrentOmni extends LinearOpMode {
             Revolve(1);
         }
     }
+
+    public int sensorDetectColor(ColorSensor sensor) {
+
+        //rgb values for the color of the balls
+        double[] empty = {64, 80, 99};
+        double[] green = {126, 582, 240};
+        double[] purple = {724, 158, 340};
+
+        double deltaE = Math.sqrt((Math.pow(empty[0] - sensor.red(),2) + (Math.pow(empty[1] - sensor.blue(),2)) + (Math.pow(empty[2] - sensor.green(), 2))));
+        double deltaR = Math.sqrt((Math.pow(green[0] - sensor.red(),2) + (Math.pow(green[1] - sensor.blue(),2)) + (Math.pow(green[2] - sensor.green(),2))));
+        double deltaB = Math.sqrt((Math.pow(purple[0] - sensor.red(),2) + (Math.pow(purple[1] - sensor.blue(),2) + (Math.pow(purple[2] - sensor.green(),2)))));
+
+        double emptyConfidence = 1 - (deltaE/3)*((1 / (deltaE + deltaR)) + (1/((deltaE + deltaB))));
+        double greenConfidence = 1 - (deltaR/3)*((1 / (deltaR + deltaE)) + (1/((deltaR + deltaB))));
+        double purpleConfidence = 1 - (deltaB/3)*((1 / (deltaB + deltaE)) + (1/((deltaB + deltaE))));
+        double[] confidenceValues = {emptyConfidence,greenConfidence,purpleConfidence};
+
+        return findLargest(confidenceValues);
+    }
+    public int findLargest(double[] array){
+        double largest = array[0];
+        int color = 0;
+
+        for(int i = 1; i < array.length; i++){
+            if(array[i] > largest){
+                largest = array[i];//update our largest value
+                color = i;//update the color we're most confident in
+            }
+            //if not then we don't care
+        }
+        return color;
+    }
+
 
     void waitTime(double time){
         double end = getRuntime() + time;
@@ -475,11 +665,39 @@ public class CurrentOmni extends LinearOpMode {
         if(revolutions % 2 == 1){
             Revolve(1);
         }
+        waitTime(0.4);
         Revolve(2);
-        waitTime(0.25);
+        waitTime(0.4);
         Revolve(2);
-        waitTime(0.25);
+        waitTime(0.4);
         Revolve(2);
     }
 
+    void revolves(){
+        if(endTime > getRuntime()){
+            Index.setPower(0);
+        }else if(!gamepad1.left_bumper) {
+            Index.setPower(0.55);
+        }
+
+        if (!hit && stopper.isPressed()) {
+            hit = true;
+            revolveTimes -= 1;
+            revolutions += 1;
+
+            if(revolutions % 2 == 0){
+                endTime = getRuntime() + 0.75;
+            }
+
+            if (revolveTimes == 0) {
+                Index.setPower(0);
+            }
+
+        }
+
+        if(!stopper.isPressed()){
+            hit = false;
+        }
+
+    }
 }

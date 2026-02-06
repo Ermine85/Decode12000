@@ -46,7 +46,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 @TeleOp(name="SpinnyThingTele", group="Linear OpMode")
-//@Disabled
+@Disabled
 public class SpinnyThingTele extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();

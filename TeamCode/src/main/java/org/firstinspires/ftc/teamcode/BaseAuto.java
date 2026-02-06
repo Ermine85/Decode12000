@@ -6,6 +6,7 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -14,6 +15,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -22,6 +25,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 
 @Autonomous(name="Auto", group="Robot")
+
 public class  BaseAuto extends LinearOpMode{
 
 
@@ -47,19 +51,28 @@ public class  BaseAuto extends LinearOpMode{
     private DcMotor RB = null;
     private DcMotor LB = null;
 
-    private DcMotor Intake = null;
-
+    //private DcMotor Encoder = null;
+    //private DcMotor Intake = null;
+    private DcMotor Index = null;
     private double timeOut = 3.00;
-    private DcMotor Transfer = null;
+    //private DcMotor Transfer = null;
     private DcMotorEx Launcher = null;
-    private Servo LaunchServo = null;
-    private DcMotor Encoder = null;
+    private Servo Pusher = null;
     private Servo ColorIndicator;
 
 
-    private DcMotor leftEncoderMotor = null;
-    private DcMotor rightEncoderMotor = null;
+    //private DcMotor leftEncoderMotor = null;
+    //private DcMotor rightEncoderMotor = null;
 
+    private String IndexMode = "INTAKE";
+    private Servo Hood = null;
+
+    private double CPR = 142; //PPR * 4
+
+    private double revolutions = 0;
+    private double HoodPos = 0;
+    private int trialVel = -1000;
+    private TouchSensor stopper = null;
     IMU imu;
     YawPitchRollAngles Orientation;
 
@@ -67,6 +80,7 @@ public class  BaseAuto extends LinearOpMode{
     boolean LauncherMaxSpd = false;
 
     double slowSpeed = 0.15;
+    private double Ta;
 
 
 
@@ -94,28 +108,33 @@ public class  BaseAuto extends LinearOpMode{
         RF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         RB.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        Encoder = hardwareMap.get(DcMotor.class, "Encoder");
+        //Encoder = hardwareMap.get(DcMotor.class, "Encoder");
 
         LF.setDirection(DcMotor.Direction.FORWARD);
         LB.setDirection(DcMotor.Direction.REVERSE);
         RF.setDirection(DcMotor.Direction.REVERSE);
         RB.setDirection(DcMotor.Direction.FORWARD);
 
-        Intake = hardwareMap.get(DcMotor.class, "Intake");
-        Transfer = hardwareMap.get(DcMotor.class, "Transfer");
+        Index = hardwareMap.get(DcMotor.class, "Index");
+        stopper = hardwareMap.get(TouchSensor.class, "Stopper");
+        Hood = hardwareMap.get(Servo.class, "Hood");
+
         Launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
-        LaunchServo = hardwareMap.get(Servo.class, "launch_servo");
-        ColorIndicator = hardwareMap.get(Servo.class, "color_indicator");
+        Pusher = hardwareMap.get(Servo.class, "Pusher");
+        ColorIndicator = hardwareMap.get(Servo.class, "Color");
+        IMU imu = hardwareMap.get(IMU.class, "imu");
+
 
         Launcher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        Transfer.setDirection(DcMotorSimple.Direction.FORWARD);
-        Intake.setDirection(DcMotorSimple.Direction.FORWARD);
+        //Transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+        //Intake.setDirection(DcMotorSimple.Direction.FORWARD);
         Launcher.setDirection(DcMotorSimple.Direction.FORWARD);
 
         Launcher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         //leftEncoderMotor = hardwareMap.get(DcMotor.class, "LeftFront");
         //rightEncoderMotor = hardwareMap.get(DcMotor.class, "RightFront");
+        Launcher.setVelocityPIDFCoefficients(2, 25, 16, 1);
 
 
         //initialized imu :D
@@ -129,35 +148,40 @@ public class  BaseAuto extends LinearOpMode{
         imu.resetYaw();
         Orientation = imu.getRobotYawPitchRollAngles();
 
-
+        Pusher.scaleRange(0.125, 0.425);
         waitForStart();
 
-        LaunchServo.scaleRange(0.73, 0.83);
+        //LaunchServo.scaleRange(0.73, 0.83);
 
-        LaunchServo.setPosition(1);
+        //LaunchServo.setPosition(1);
 
 
         //Auto Script
 
-
-        Intake.setPower(-1);
-
-        goAwayFromAprilTag(135, .5f);
-
         aprilTagAimCorrection();
+
+        int distance = (int)GetDistance(Ta);
+
+        Launch(3, -1350 - (200 / 30 * (distance - 270)));
+
+        //LF.setPower(0.3);
+        //RF.setPower(-0.3);
+        //LB.setPower(-0.3);
+        //RB.setPower(0.3);
+        //aprilTagAimCorrection();
 
         sleep(1500);
 
+        stopPower();
 
-
-        Intake.setPower(0);
+        //Intake.setPower(0);
 
 
 
 
 
     }
-
+/*
     public void shootBalls(int Time){
 
         Launcher.setVelocity(-3800);
@@ -175,7 +199,7 @@ public class  BaseAuto extends LinearOpMode{
             LauncherMaxSpd = LauncherVeloc < -1800;
         }
 
-        LaunchServo.setPosition(0);
+        //LaunchServo.setPosition(0);
         Transfer.setPower(0.5);
 
 
@@ -183,15 +207,15 @@ public class  BaseAuto extends LinearOpMode{
         Launcher.setPower(2);
         Transfer.setPower(0);
         Intake.setPower(0);
-        LaunchServo.setPosition(1);
+        //LaunchServo.setPosition(1);
         sleep(500);
         Launcher.setPower(0);
 
 
 
     }
-
-    public void goVroom(int Distance, float Speed){
+*/
+    /*public void goVroom(int Distance, float Speed){
 
         Encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         Encoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -304,7 +328,7 @@ public class  BaseAuto extends LinearOpMode{
         stopPower();
         imu.resetYaw();
 
-    }
+    }*/
 
     public void stopPower(){ // stops wheels :)
 
@@ -316,8 +340,8 @@ public class  BaseAuto extends LinearOpMode{
     }
 
     public void limeLightTelemetry(){
-        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-        limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+        //YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        //limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
         LLResult result = limelight.getLatestResult();
         if (result != null) {
             if (result.isValid()) {
@@ -344,8 +368,8 @@ public class  BaseAuto extends LinearOpMode{
     public void goTowardAprilTag (int ATDistance, float Speed){
 
         // Limelight April Tag code first
-        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-        limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+        //YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        //limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
         LLResult result = limelight.getLatestResult();
         if (result != null) {
             if (result.isValid()) {
@@ -369,11 +393,22 @@ public class  BaseAuto extends LinearOpMode{
         }
     }
 
-    public void goAwayFromAprilTag (int ATDistance, float Speed){
+
+
+    public void goAwayFromAprilTag (int ATDistance, float Speed, int disOverride){
+        //Encorder stuff
+        //Encoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //Encoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        LF.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        LB.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        RF.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        RB.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
 
         // Limelight April Tag code first
-        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-        limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+        //YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        //limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
         LLResult result = limelight.getLatestResult();
 
         telemetry.addData("active",0);
@@ -386,11 +421,12 @@ public class  BaseAuto extends LinearOpMode{
         RF.setPower(Speed);
         RB.setPower(Speed);
 
-        double endTime = getRuntime() + timeOut;
-
-        while ((result != null && !result.isValid()) && (getRuntime() < endTime)) {
+       //double endTime = getRuntime() + timeOut;
+        // dis = distance
+        /*while ((result != null && !result.isValid()) || (Encoder.getCurrentPosition() < disOverride) /*&& (getRuntime() < endTime )) {
             result = limelight.getLatestResult();
             telemetry.addData("Distance", GetDistance(result.getTa()));
+            telemetry.addData("LFE Value",  Encoder.getCurrentPosition());
             limeLightTelemetry();
             telemetry.update();
 
@@ -401,7 +437,7 @@ public class  BaseAuto extends LinearOpMode{
         if(getRuntime() > endTime){
             return;
         }
-
+        */
 
 
         if (result.isValid()) {
@@ -420,18 +456,18 @@ public class  BaseAuto extends LinearOpMode{
             }
 
             stopPower();
-            shootBalls(3000);
+            //shootBalls(3000);
 
         }
     }
     public void aprilTagAimCorrection (){
 
-        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-        limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+        //YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        //limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
         LLResult result = limelight.getLatestResult();
 
         //If it can see the april tag, but it isn't straight ahead, it will try to correct
-        while (abs(result.getTx()) >= abs(5.0)) {
+        while (abs(result.getTx()) >= abs(3.0) && result.isValid()) {
             result = limelight.getLatestResult();
             telemetry.addData("tx", abs(result.getTx()));
             telemetry.update();
@@ -446,14 +482,89 @@ public class  BaseAuto extends LinearOpMode{
                 LB.setPower(0.3);
                 RF.setPower(-0.3);
                 RB.setPower(-0.3);
-            } else {
-                stopPower();
             }
         }
+
+        Ta = result.getTa();
         stopPower();
     }
 
     double GetDistance(double TArea){
         return (120.9809 + (331.8667 * Math.pow(Math.E, (-2.119361 * TArea))));
+    }
+
+    void Revolve(int times){
+        Index.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        revolutions += times;
+        boolean hit = true;
+        while(times > 0){
+
+            Index.setPower(0.20);
+            if(!hit && stopper.isPressed()){
+                hit = true;
+                times -= 1;
+            }
+            if(!stopper.isPressed()){
+                hit = false;
+            }
+        }
+
+        Index.setPower(0);
+
+    }
+
+    void waitTime(double time){
+        double end = getRuntime() + time;
+        while(getRuntime() < end){
+
+        }
+    }
+
+    void Load(){
+        if(revolutions % 2 == 1){
+            Revolve(1);
+        }
+        Revolve(2);
+        waitTime(0.25);
+        Revolve(2);
+        waitTime(0.25);
+        Revolve(2);
+    }
+
+    void Launch(int amount, int vel){
+        int times = amount;
+        if(revolutions % 2 == 0){
+            Revolve(1);
+        }
+
+        Launcher.setVelocity(vel);
+        int vel2 = 0;
+        do{
+            while(Launcher.getVelocity() > vel){
+                Launcher.setVelocity(vel);
+            }
+            /*
+            if(times == amount){
+                while(Launcher.getVelocity() > vel){
+                    Launcher.setVelocity(vel);
+                }
+                vel2 = (int)Launcher.getVelocity();
+            }else{
+                while(Launcher.getVelocity() > vel2){
+                    Launcher.setVelocity(vel2);
+                }
+            }*/
+            Launcher.setVelocity(vel);
+            waitTime(1);
+            Pusher.setPosition(1);
+            waitTime(0.5);
+            Pusher.setPosition(0);
+            waitTime(0.5);
+            Revolve(2);
+            amount -= 1;
+
+        }while(amount != 0);
+
     }
 }

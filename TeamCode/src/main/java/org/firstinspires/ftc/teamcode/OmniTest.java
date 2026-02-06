@@ -247,6 +247,12 @@ public class OmniTest extends LinearOpMode {
                 ColorIndicator.setPosition(0.28);
             }
 
+            if(gamepad1.aWasReleased()){
+                Launch(3, -100);
+            }
+
+            Pusher.setPosition(gamepad1.right_trigger);
+
 /*
             if(gamepad1.a){
                 LeftFront.setPower(1);
@@ -310,7 +316,7 @@ public class OmniTest extends LinearOpMode {
             telemetry.addData("Touch: ", stopper.isPressed());
 
 
-            Launcher.setVelocity(gamepad1.right_trigger * -6800);
+            //Launcher.setVelocity(gamepad1.right_trigger * -6800);
             //Launcher.setVelocity(gamepad1.left_trigger * 3800);
 
             double max;
@@ -417,7 +423,6 @@ public class OmniTest extends LinearOpMode {
 
     void Revolve(int times){
         Index.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
         revolutions += times;
         boolean hit = true;
         while(times > 0){

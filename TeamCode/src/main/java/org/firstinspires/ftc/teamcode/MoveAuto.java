@@ -34,6 +34,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -67,12 +68,24 @@ public class MoveAuto extends LinearOpMode {
 
     private DcMotor Intake = null;
     private DcMotor Transfer = null;
+    private DcMotor Index = null;
     private DcMotorEx Launcher = null;
-    private Servo LaunchServo = null;
+    private Servo Pusher = null;
+    private Servo ColorIndicator;
 
     private boolean Pressed = false;
 
     private boolean RunLauncer = false;
+    private String IndexMode = "INTAKE";
+    private Servo Hood = null;
+
+    private double CPR = 142; //PPR * 4
+
+    private double revolutions = 0;
+    private double HoodPos = 0;
+    private int trialVel = -1000;
+    private TouchSensor stopper = null;
+
 
 
     @Override
@@ -86,7 +99,7 @@ public class MoveAuto extends LinearOpMode {
         Intake = hardwareMap.get(DcMotor.class, "Intake");
         Transfer = hardwareMap.get(DcMotor.class, "Transfer");
         Launcher = hardwareMap.get(DcMotorEx.class, "Launcher");
-        LaunchServo = hardwareMap.get(Servo.class, "launch_servo");
+        //LaunchServo = hardwareMap.get(Servo.class, "launch_servo");
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
@@ -109,9 +122,9 @@ public class MoveAuto extends LinearOpMode {
 
         // Wait for the game to start (driver presses START)
         waitForStart();
-        LaunchServo.setPosition(1);
+        //LaunchServo.setPosition(1);
 
-        LaunchServo.scaleRange(0.73, 0.83);
+        //LaunchServo.scaleRange(0.73, 0.83);
 
         boolean LauncherMaxSpd = false;
 
