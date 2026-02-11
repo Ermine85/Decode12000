@@ -83,7 +83,7 @@ import java.util.Objects;
  */
 
 @TeleOp(name="DRIVE 2: The Sequel", group="Linear OpMode")
-@Disabled
+//@Disabled
 public class OmniTest extends LinearOpMode {
 
     // Declare Opmode member for the Limelight 3A camera
@@ -146,6 +146,7 @@ public class OmniTest extends LinearOpMode {
         Pusher = hardwareMap.get(Servo.class, "Pusher");
         ColorIndicator = hardwareMap.get(Servo.class, "Color");
         IMU imu = hardwareMap.get(IMU.class, "imu");
+        Pusher.setPosition(0);
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -174,7 +175,6 @@ public class OmniTest extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        imu = hardwareMap.get(IMU.class, "imu");
 
         RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
         RevHubOrientationOnRobot.UsbFacingDirection UsbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
@@ -224,7 +224,7 @@ public class OmniTest extends LinearOpMode {
             }
 
             int distance = (int)(GetDistance(result.getTa()));
-             Pusher.scaleRange(0.125, 0.425);
+             Pusher.scaleRange(0, 1);
             //SetIndexMode();
             telemetry.addData("Trial Vel", trialVel);
             telemetry.addData("Attempt vel", -1450 - (200/30 * (distance - 270)));
@@ -514,8 +514,8 @@ public class OmniTest extends LinearOpMode {
 
     public void aprilTagAimCorrection (){
 
-        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-        limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+        //YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        //limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
         LLResult result = limelight.getLatestResult();
 
         //If it can see the april tag, but it isn't straight ahead, it will try to correct
