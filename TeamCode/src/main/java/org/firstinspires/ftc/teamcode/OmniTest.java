@@ -111,6 +111,7 @@ public class OmniTest extends LinearOpMode {
 
     private double CPR = 142; //PPR * 4
 
+    private double Test = 0;
     private double revolutions = 0;
     private double HoodPos = 0;
     private int trialVel = -1000;
@@ -224,7 +225,7 @@ public class OmniTest extends LinearOpMode {
             }
 
             int distance = (int)(GetDistance(result.getTa()));
-             Pusher.scaleRange(0, 1);
+             Pusher.scaleRange(0, 0.95);
             //SetIndexMode();
             telemetry.addData("Trial Vel", trialVel);
             telemetry.addData("Attempt vel", -1450 - (200/30 * (distance - 270)));
@@ -290,7 +291,6 @@ public class OmniTest extends LinearOpMode {
                 trialVel -= 50;
             }
 
-
             if(gamepad1.xWasReleased()){
                 Load();
             }
@@ -309,6 +309,22 @@ public class OmniTest extends LinearOpMode {
             if(gamepad1.dpadRightWasReleased() && HoodPos < 1){
                 HoodPos += 0.1;
             }
+
+            /*
+            //This code allows you to manually move the pusher servo
+            if(gamepad1.rightBumperWasReleased()){
+                if(Test < 1) {
+                    Test = Test + 0.05;
+                }
+            }
+            Pusher.setPosition(Test);
+
+            if(gamepad1.leftBumperWasReleased()){
+                if(Test >= 0.04) {
+                    Test = Test - 0.05;
+                }
+            }
+            */
 
             Hood.setPosition(HoodPos);
 
@@ -375,6 +391,7 @@ public class OmniTest extends LinearOpMode {
             //telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
             telemetry.addData("Motor Speed", "%.2f", LauncherVeloc);
             telemetry.addData("Is Launcher at full speed?", LauncherMaxSpd);
+            telemetry.addData("Test Var", Test);
             telemetry.update();
         }
 
