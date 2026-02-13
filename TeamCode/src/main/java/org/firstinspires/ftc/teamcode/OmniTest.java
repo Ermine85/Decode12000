@@ -171,6 +171,7 @@ public class OmniTest extends LinearOpMode {
         Launcher.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
         Index.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        Launcher.setVelocityPIDFCoefficients(2, 25, 16, 1);
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
@@ -415,6 +416,7 @@ public class OmniTest extends LinearOpMode {
                 while(Launcher.getVelocity() > vel){
                     Launcher.setVelocity(vel);
                 }
+                //
                 vel2 = (int)Launcher.getVelocity();
             }else{
                 while(Launcher.getVelocity() > vel2){
