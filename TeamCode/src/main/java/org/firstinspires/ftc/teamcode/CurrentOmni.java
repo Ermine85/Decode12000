@@ -31,6 +31,8 @@ package org.firstinspires.ftc.teamcode;
 
 import static org.firstinspires.ftc.teamcode.TransferedWayPoint.findLargest;
 
+import static java.lang.Math.abs;
+
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -130,6 +132,9 @@ public class CurrentOmni extends LinearOpMode {
     private ColorSensor color1;
     private ColorSensor color2;
     private ColorSensor color3;
+    private ColorSensor loadcolor;
+    private ColorSensor testcolor;
+    private String colorName;
 
     private static final int[] motif1 = {1,2,2};
     private static final int[] motif2 = {2,1,2};
@@ -171,6 +176,7 @@ public class CurrentOmni extends LinearOpMode {
         color1 = hardwareMap.get(ColorSensor.class, "Color1");
         color2 = hardwareMap.get(ColorSensor.class, "Color2");
         color3 = hardwareMap.get(ColorSensor.class, "Color3");
+        loadcolor = hardwareMap.get(ColorSensor.class, "Load");
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -212,6 +218,8 @@ public class CurrentOmni extends LinearOpMode {
         telemetry.update();
 
         chosenmotif = motif1;
+        testcolor = color1;
+        colorName = "Color1";
         waitForStart();
 
         runtime.reset();
@@ -223,7 +231,11 @@ public class CurrentOmni extends LinearOpMode {
         while (opModeIsActive()) {
 
             //constantly update what the color sensors see in regard to order (load position only).
-            currentorder = new int[] {sensorDetectColor(color1), sensorDetectColor(color2), sensorDetectColor(color3)};
+            if(LoadPos()){
+                currentorder = new int[] {sensorDetectColor(color1), sensorDetectColor(color2), sensorDetectColor(color3)};
+                telemetry.addData("CurrOrder", currentorder);
+                telemetry.addLine();
+            }
 
             telemetry.addLine();
             if(teamTag == 20){
@@ -334,7 +346,30 @@ public class CurrentOmni extends LinearOpMode {
                 IDRegistering = !IDRegistering;
             }
 
+            if(gamepad2.bWasReleased()){
+                testcolor = color1;
+                colorName = "Color1";
+            }
+            if(gamepad2.aWasReleased()){
+                testcolor = color2;
+                colorName = "Color2";
 
+            }
+            if(gamepad2.xWasReleased()){
+                testcolor = color3;
+                colorName = "Color3";
+            }
+            if(gamepad2.yWasReleased()){
+                testcolor = loadcolor;
+                colorName = "LoadColor";
+            }
+
+            telemetry.addLine();
+            telemetry.addData("ColorSensor", colorName);
+            telemetry.addData("Red", testcolor.red());
+            telemetry.addData("Green", testcolor.green());
+            telemetry.addData("Blue", testcolor.blue());
+            telemetry.addLine();
             /*if(gamepad1.leftBumperWasReleased()){
                 trialVel += 50;
             }
@@ -342,7 +377,7 @@ public class CurrentOmni extends LinearOpMode {
                 trialVel -= 50;
             }*/
 
-            if(gamepad1.xWasReleased()){
+            /*if(gamepad1.xWasReleased()){
                 hit = true;
                 if(Empty()){
                     revolveTimes = 6;
@@ -386,7 +421,7 @@ public class CurrentOmni extends LinearOpMode {
             Pusher.setPosition(gamepad1.right_trigger);
             //Launcher.setVelocity(gamepad1.right_trigger * -6800);
             //Launcher.setVelocity(gamepad1.left_trigger * 3800);
-
+            */
             double max;
 
             double LauncherVeloc = Launcher.getVelocity();
@@ -587,6 +622,15 @@ public class CurrentOmni extends LinearOpMode {
         }
     }
 
+    public boolean LoadPos(){
+        //int[] load = {724, 158, 340};
+        //int[] launch;
+
+        telemetry.addLine();
+
+        return true;
+    }
+
     public int sensorDetectColor(ColorSensor sensor) {
 
         //rgb values for the color of the balls
@@ -659,6 +703,44 @@ public class CurrentOmni extends LinearOpMode {
         }
         return result.getTa();
 
+    }
+    public boolean OnTargetAprilTag (){
+
+        //YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        //limelight.updateRobotOrientation(orientation.getYaw(AngleUnit.DEGREES));
+        LLResult result = limelight.getLatestResult();
+
+        //If it can see the april tag, but it isn't straight ahead, it will try to correct
+        if(abs(result.getTx()) >= abs(3)) {
+            result = limelight.getLatestResult();
+            telemetry.addData("tx", abs(result.getTx()));
+            telemetry.update();
+
+            if (result.getTx() < 0) {
+                LeftFront.setPower(-0.3);
+                LeftBack.setPower(-0.3);
+                RightFront.setPower(0.3);
+                RightBack.setPower(0.3);
+            } else if (result.getTx() > 0){
+                LeftFront.setPower(0.3);
+                LeftBack.setPower(0.3);
+                RightFront.setPower(-0.3);
+                RightBack.setPower(-0.3);
+            } else {
+                LeftFront.setPower(0);
+                LeftBack.setPower(0);
+                RightFront.setPower(0);
+                RightBack.setPower(0);
+            }
+            return false;
+        }
+        else{
+            LeftFront.setPower(0);
+            LeftBack.setPower(0);
+            RightFront.setPower(0);
+            RightBack.setPower(0);
+            return true;
+        }
     }
 
     void Load(){
